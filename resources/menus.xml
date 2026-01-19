@@ -1,0 +1,14 @@
+<menus>
+    <menu id="MainMenu">
+        <menu-item id="undo_score">Undo Last Score</menu-item>
+        <menu-item id="kick_conversion">Conversion (60s)</menu-item>
+        <menu-item id="kick_penalty">Penalty Kick (90s)</menu-item>
+        <menu-item id="kick_stop">Stop Kick Timer</menu-item>
+        <menu-item id="sin_bin_start">Start Sin Bin</menu-item>
+        <menu-item id="sin_bin_stop">Stop Sin Bin</menu-item>
+        <menu-item id="half_time">Half Time</menu-item>
+        <menu-item id="finish_match">Finish Match</menu-item>
+        <menu-item id="reset">Reset Match</menu-item>
+        <menu-item id="settings">Settings</menu-item>
+    </menu>
+</menus>

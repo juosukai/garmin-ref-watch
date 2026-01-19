@@ -1,0 +1,5 @@
+<layouts>
+    <layout id="MainLayout">
+        <label id="MainView" x="0" y="0" />
+    </layout>
+</layouts>

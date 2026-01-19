@@ -1,0 +1,7 @@
+bin/
+.vscode/
+*.prg
+*.debug.xml
+*.iq
+.DS_Store
+.idea/
