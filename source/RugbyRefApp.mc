@@ -14,7 +14,8 @@ class RugbyRefApp extends App.AppBase {
     }
 
     function getInitialView() {
-        return [ new RugbyRefView(), new RugbyRefDelegate() ];
+        var view = new RugbyRefView();
+        return [ view, new RugbyRefDelegate(view) ];
     }
 
 }

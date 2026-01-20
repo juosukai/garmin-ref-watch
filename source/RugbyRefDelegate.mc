@@ -3,36 +3,36 @@ using Toybox.System as Sys;
 
 class RugbyRefDelegate extends Ui.BehaviorDelegate {
 
-    function initialize() {
+    private var mView;
+
+    function initialize(view) {
         BehaviorDelegate.initialize();
+        mView = view;
     }
 
     function onSelect() {
         // Start/Stop timer with SELECT button
-        var view = Ui.View.findDrawableById("MainView");
-        if (view != null) {
-            view.toggleTimer();
-        }
+        mView.toggleTimer();
         return true;
     }
     
     function onNextPage() {
         // Score for home team (DOWN button)
         var menu = new ScoreMenu(:home);
-        Ui.pushView(menu, new ScoreMenuDelegate(:home), Ui.SLIDE_UP);
+        Ui.pushView(menu, new ScoreMenuDelegate(mView, :home), Ui.SLIDE_UP);
         return true;
     }
     
     function onPreviousPage() {
         // Score for away team (UP button)
         var menu = new ScoreMenu(:away);
-        Ui.pushView(menu, new ScoreMenuDelegate(:away), Ui.SLIDE_DOWN);
+        Ui.pushView(menu, new ScoreMenuDelegate(mView, :away), Ui.SLIDE_DOWN);
         return true;
     }
 
     function onMenu() {
         var menu = new Rez.Menus.MainMenu();
-        Ui.pushView(menu, new MainMenuDelegate(), Ui.SLIDE_UP);
+        Ui.pushView(menu, new MainMenuDelegate(mView), Ui.SLIDE_UP);
         return true;
     }
     
@@ -44,37 +44,35 @@ class RugbyRefDelegate extends Ui.BehaviorDelegate {
 
 class MainMenuDelegate extends Ui.MenuInputDelegate {
 
-    function initialize() {
+    private var mView;
+
+    function initialize(view) {
         MenuInputDelegate.initialize();
+        mView = view;
     }
 
     function onMenuItem(item) {
-        var view = Ui.View.findDrawableById("MainView");
-        if (view == null) {
-            return;
-        }
-        
         if (item == :sin_bin_start) {
-            view.startSinBin();
+            mView.startSinBin();
         } else if (item == :sin_bin_stop) {
-            view.stopSinBin();
+            mView.stopSinBin();
         } else if (item == :half_time) {
-            view.startHalfTime();
+            mView.startHalfTime();
         } else if (item == :finish_match) {
-            view.finishMatch();
+            mView.finishMatch();
         } else if (item == :reset) {
-            view.resetMatch();
+            mView.resetMatch();
         } else if (item == :undo_score) {
-            view.undoLastScore();
+            mView.undoLastScore();
         } else if (item == :kick_conversion) {
-            view.startKickTimer(:conversion);
+            mView.startKickTimer(:conversion);
         } else if (item == :kick_penalty) {
-            view.startKickTimer(:penalty);
+            mView.startKickTimer(:penalty);
         } else if (item == :kick_stop) {
-            view.stopKickTimer();
+            mView.stopKickTimer();
         } else if (item == :settings) {
             var settingsView = new SettingsMenu();
-            Ui.pushView(settingsView, new SettingsMenuDelegate(), Ui.SLIDE_UP);
+            Ui.pushView(settingsView, new SettingsMenuDelegate(mView), Ui.SLIDE_UP);
         }
     }
 }
@@ -92,18 +90,15 @@ class ScoreMenu extends Ui.Menu2 {
 
 class ScoreMenuDelegate extends Ui.Menu2InputDelegate {
     private var mTeam;
+    private var mView;
     
-    function initialize(team) {
+    function initialize(view, team) {
         Menu2InputDelegate.initialize();
+        mView = view;
         mTeam = team;
     }
 
     function onSelect(item) {
-        var view = Ui.View.findDrawableById("MainView");
-        if (view == null) {
-            return;
-        }
-        
         var points = 0;
         var id = item.getId();
         
@@ -116,9 +111,9 @@ class ScoreMenuDelegate extends Ui.Menu2InputDelegate {
         }
         
         if (mTeam == :home) {
-            view.addScoreHome(points);
+            mView.addScoreHome(points);
         } else {
-            view.addScoreAway(points);
+            mView.addScoreAway(points);
         }
         
         Ui.popView(Ui.SLIDE_IMMEDIATE);

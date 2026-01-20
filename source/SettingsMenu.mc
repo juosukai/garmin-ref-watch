@@ -17,8 +17,11 @@ class SettingsMenu extends Ui.Menu2 {
 }
 
 class SettingsMenuDelegate extends Ui.Menu2InputDelegate {
-    function initialize() {
+    private var mView;
+
+    function initialize(view) {
         Menu2InputDelegate.initialize();
+        mView = view;
     }
 
     function onSelect(item) {
@@ -26,19 +29,19 @@ class SettingsMenuDelegate extends Ui.Menu2InputDelegate {
         
         if (id == :match_format) {
             var menu = new MatchFormatMenu();
-            Ui.pushView(menu, new MatchFormatMenuDelegate(), Ui.SLIDE_UP);
+            Ui.pushView(menu, new MatchFormatMenuDelegate(mView), Ui.SLIDE_UP);
         } else if (id == :half_duration) {
             var menu = new HalfDurationMenu();
-            Ui.pushView(menu, new HalfDurationMenuDelegate(), Ui.SLIDE_UP);
+            Ui.pushView(menu, new HalfDurationMenuDelegate(mView), Ui.SLIDE_UP);
         } else if (id == :sin_bin_duration) {
             var menu = new SinBinDurationMenu();
-            Ui.pushView(menu, new SinBinDurationMenuDelegate(), Ui.SLIDE_UP);
+            Ui.pushView(menu, new SinBinDurationMenuDelegate(mView), Ui.SLIDE_UP);
         } else if (id == :break_duration) {
             var menu = new BreakDurationMenu();
-            Ui.pushView(menu, new BreakDurationMenuDelegate(), Ui.SLIDE_UP);
+            Ui.pushView(menu, new BreakDurationMenuDelegate(mView), Ui.SLIDE_UP);
         } else if (id == :team_colors) {
             var menu = new TeamColorsMenu();
-            Ui.pushView(menu, new TeamColorsMenuDelegate(), Ui.SLIDE_UP);
+            Ui.pushView(menu, new TeamColorsMenuDelegate(mView), Ui.SLIDE_UP);
         } else if (id == :vibrate) {
             toggleVibration();
             Ui.popView(Ui.SLIDE_IMMEDIATE);
@@ -55,9 +58,8 @@ class SettingsMenuDelegate extends Ui.Menu2InputDelegate {
         }
         Storage.setValue("vibrateEnabled", !current);
         
-        var view = Ui.View.findDrawableById("MainView");
-        if (view != null) {
-            view.loadSettings();
+        if (mView != null) {
+            mView.loadSettings();
         }
     }
     
@@ -68,9 +70,8 @@ class SettingsMenuDelegate extends Ui.Menu2InputDelegate {
         }
         Storage.setValue("reminderEnabled", !current);
         
-        var view = Ui.View.findDrawableById("MainView");
-        if (view != null) {
-            view.loadSettings();
+        if (mView != null) {
+            mView.loadSettings();
         }
     }
 }
@@ -90,8 +91,11 @@ class MatchFormatMenu extends Ui.Menu2 {
 }
 
 class MatchFormatMenuDelegate extends Ui.Menu2InputDelegate {
-    function initialize() {
+    private var mView;
+
+    function initialize(view) {
         Menu2InputDelegate.initialize();
+        mView = view;
     }
 
     function onSelect(item) {
@@ -123,9 +127,8 @@ class MatchFormatMenuDelegate extends Ui.Menu2InputDelegate {
         Storage.setValue("halfDuration", halfDur);
         Storage.setValue("sinBinDuration", sinBinDur);
         
-        var view = Ui.View.findDrawableById("MainView");
-        if (view != null) {
-            view.loadSettings();
+        if (mView != null) {
+            mView.loadSettings();
         }
         
         Ui.popView(Ui.SLIDE_IMMEDIATE);
@@ -150,17 +153,19 @@ class HalfDurationMenu extends Ui.Menu2 {
 }
 
 class HalfDurationMenuDelegate extends Ui.Menu2InputDelegate {
-    function initialize() {
+    private var mView;
+
+    function initialize(view) {
         Menu2InputDelegate.initialize();
+        mView = view;
     }
 
     function onSelect(item) {
         var duration = item.getId();
         Storage.setValue("halfDuration", duration);
         
-        var view = Ui.View.findDrawableById("MainView");
-        if (view != null) {
-            view.loadSettings();
+        if (mView != null) {
+            mView.loadSettings();
         }
         
         Ui.popView(Ui.SLIDE_IMMEDIATE);
@@ -180,17 +185,19 @@ class SinBinDurationMenu extends Ui.Menu2 {
 }
 
 class SinBinDurationMenuDelegate extends Ui.Menu2InputDelegate {
-    function initialize() {
+    private var mView;
+
+    function initialize(view) {
         Menu2InputDelegate.initialize();
+        mView = view;
     }
 
     function onSelect(item) {
         var duration = item.getId();
         Storage.setValue("sinBinDuration", duration);
         
-        var view = Ui.View.findDrawableById("MainView");
-        if (view != null) {
-            view.loadSettings();
+        if (mView != null) {
+            mView.loadSettings();
         }
         
         Ui.popView(Ui.SLIDE_IMMEDIATE);
@@ -211,17 +218,19 @@ class BreakDurationMenu extends Ui.Menu2 {
 }
 
 class BreakDurationMenuDelegate extends Ui.Menu2InputDelegate {
-    function initialize() {
+    private var mView;
+
+    function initialize(view) {
         Menu2InputDelegate.initialize();
+        mView = view;
     }
 
     function onSelect(item) {
         var duration = item.getId();
         Storage.setValue("breakDuration", duration);
         
-        var view = Ui.View.findDrawableById("MainView");
-        if (view != null) {
-            view.loadSettings();
+        if (mView != null) {
+            mView.loadSettings();
         }
         
         Ui.popView(Ui.SLIDE_IMMEDIATE);
@@ -240,8 +249,11 @@ class TeamColorsMenu extends Ui.Menu2 {
 }
 
 class TeamColorsMenuDelegate extends Ui.Menu2InputDelegate {
-    function initialize() {
+    private var mView;
+
+    function initialize(view) {
         Menu2InputDelegate.initialize();
+        mView = view;
     }
 
     function onSelect(item) {
@@ -249,10 +261,10 @@ class TeamColorsMenuDelegate extends Ui.Menu2InputDelegate {
         
         if (id == :home_color) {
             var menu = new ColorPickerMenu(:home);
-            Ui.pushView(menu, new ColorPickerMenuDelegate(:home), Ui.SLIDE_UP);
+            Ui.pushView(menu, new ColorPickerMenuDelegate(mView, :home), Ui.SLIDE_UP);
         } else if (id == :away_color) {
             var menu = new ColorPickerMenu(:away);
-            Ui.pushView(menu, new ColorPickerMenuDelegate(:away), Ui.SLIDE_UP);
+            Ui.pushView(menu, new ColorPickerMenuDelegate(mView, :away), Ui.SLIDE_UP);
         }
     }
 }
@@ -276,9 +288,11 @@ class ColorPickerMenu extends Ui.Menu2 {
 
 class ColorPickerMenuDelegate extends Ui.Menu2InputDelegate {
     private var mTeam;
+    private var mView;
     
-    function initialize(team) {
+    function initialize(view, team) {
         Menu2InputDelegate.initialize();
+        mView = view;
         mTeam = team;
     }
 
@@ -291,9 +305,8 @@ class ColorPickerMenuDelegate extends Ui.Menu2InputDelegate {
             Storage.setValue("awayColor", color);
         }
         
-        var view = Ui.View.findDrawableById("MainView");
-        if (view != null) {
-            view.loadSettings();
+        if (mView != null) {
+            mView.loadSettings();
         }
         
         Ui.popView(Ui.SLIDE_IMMEDIATE);
