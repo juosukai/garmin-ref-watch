@@ -5,3 +5,9 @@ bin/
 *.iq
 .DS_Store
 .idea/
+gen/
+bin/
+internal-mir/
+external-mir/
+developer_key.der
+*.prg

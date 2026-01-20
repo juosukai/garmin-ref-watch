@@ -33,6 +33,7 @@ class RugbyRefView extends Ui.View {
     
     // Timer
     private var mTimer;
+    private var mTimerRunning = false;
     
     // Settings (loaded from storage)
     private var mHalfDuration = 2400;     // 40 minutes default
@@ -204,6 +205,7 @@ class RugbyRefView extends Ui.View {
 
     function onHide() {
         mTimer.stop();
+        mTimerRunning = false;
     }
 
     function toggleTimer() {
@@ -222,10 +224,12 @@ class RugbyRefView extends Ui.View {
             mStoppedTime = 0;
             mHasVibrated60s = false;
             mTimer.stop();
+            mTimerRunning = false;
         } else {
             mMatchRunning = true;
             mStoppedTime = 0;
             mTimer.start(method(:onTimerTick), 1000, true);
+            mTimerRunning = true;
         }
         Ui.requestUpdate();
     }
@@ -333,8 +337,9 @@ class RugbyRefView extends Ui.View {
         mBreakTime = 0;
         mMatchRunning = false;
         // Keep timer running to track break
-        if (!mTimer.isRunning()) {
+        if (!mTimerRunning) {
             mTimer.start(method(:onTimerTick), 1000, true);
+            mTimerRunning = true;
         }
         vibrate();
         Ui.requestUpdate();
@@ -344,6 +349,7 @@ class RugbyRefView extends Ui.View {
         mMatchFinished = true;
         mMatchRunning = false;
         mTimer.stop();
+        mTimerRunning = false;
         vibrate();
         Ui.requestUpdate();
     }
@@ -363,6 +369,7 @@ class RugbyRefView extends Ui.View {
         mScoreHistory = [];
         mKickTimerActive = false;
         mTimer.stop();
+        mTimerRunning = false;
         Ui.requestUpdate();
     }
     
@@ -372,8 +379,9 @@ class RugbyRefView extends Ui.View {
         mKickTimerTime = kickType == :conversion ? 60 : 90;
         
         // Start timer if not running
-        if (!mTimer.isRunning()) {
+        if (!mTimerRunning) {
             mTimer.start(method(:onTimerTick), 1000, true);
+            mTimerRunning = true;
         }
         vibrateShort();
         Ui.requestUpdate();
