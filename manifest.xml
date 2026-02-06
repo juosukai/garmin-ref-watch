@@ -5,6 +5,7 @@
             <iq:product id="fenix5x"/>
         </iq:products>
         <iq:permissions>
+            <iq:uses-permission id="Vibrate"/>
         </iq:permissions>
         <iq:languages>
             <iq:language>eng</iq:language>

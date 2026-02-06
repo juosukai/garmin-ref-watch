@@ -8,19 +8,21 @@ using Toybox.Application.Storage as Storage;
 class RugbyRefView extends Ui.View {
 
     // Match state
-    private var mMatchTime = 0;          // seconds
+    private var mMatchTime = 0;          // seconds elapsed in current half
     private var mMatchRunning = false;
-    private var mHalf = 1;                // 1 or 2
+    private var mHalf = 1;               // 1 or 2
     private var mScoreHome = 0;
     private var mScoreAway = 0;
     private var mHalfTimeBreak = false;  // tracking half-time break
     private var mBreakTime = 0;          // seconds in break
     private var mMatchFinished = false;  // match completed
-    private var mStoppedTime = 0;        // seconds stopped (for 60s reminder)
-    private var mHasVibrated60s = false; // prevent multiple vibrations
+    private var mMatchStarted = false;   // has the match ever been started
+    private var mStoppedTime = 0;        // seconds clock has been stopped
+    private var mHasVibrated60s = false;  // prevent repeated 60s vibrations
+    private var mH1FinalTime = 0;        // store H1 time when going to half-time
     
     // Score history for undo
-    private var mScoreHistory = [];
+    private var mScoreHistory;
     
     // Sin bin state
     private var mSinBinActive = false;
@@ -47,6 +49,7 @@ class RugbyRefView extends Ui.View {
     function initialize() {
         View.initialize();
         mTimer = new Timer.Timer();
+        mScoreHistory = [];
         loadSettings();
     }
     
@@ -73,11 +76,9 @@ class RugbyRefView extends Ui.View {
         if (reminder != null) { mReminderEnabled = reminder; }
     }
 
-    function onLayout(dc) {
-        setLayout(Rez.Layouts.MainLayout(dc));
-    }
-
     function onShow() {
+        // Restart the hardware timer if we need it (e.g. returning from a menu)
+        ensureTimerState();
     }
 
     function onUpdate(dc) {
@@ -86,6 +87,7 @@ class RugbyRefView extends Ui.View {
         
         var width = dc.getWidth();
         var height = dc.getHeight();
+        var centerX = width / 2;
         
         // Match summary screen
         if (mMatchFinished) {
@@ -95,117 +97,163 @@ class RugbyRefView extends Ui.View {
         
         // Half-time break screen
         if (mHalfTimeBreak) {
-            dc.setColor(Gfx.COLOR_ORANGE, Gfx.COLOR_TRANSPARENT);
-            dc.drawText(width/2, height/4, Gfx.FONT_LARGE, "HALF TIME", Gfx.TEXT_JUSTIFY_CENTER);
-            
-            dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
-            var breakTimeStr = formatTime(mBreakTime);
-            dc.drawText(width/2, height/2, Gfx.FONT_NUMBER_HOT, breakTimeStr, Gfx.TEXT_JUSTIFY_CENTER);
-            
-            dc.setColor(Gfx.COLOR_DK_GRAY, Gfx.COLOR_TRANSPARENT);
-            dc.drawText(width/2, height * 0.7, Gfx.FONT_SMALL, "Break Time", Gfx.TEXT_JUSTIFY_CENTER);
-            dc.drawText(width/2, height - 20, Gfx.FONT_XTINY, "SELECT to start H2", Gfx.TEXT_JUSTIFY_CENTER);
+            drawHalfTimeScreen(dc, width, height);
             return;
         }
         
-        // Draw match timer (large, center)
-        var matchTimeStr = formatTime(mMatchTime);
-        var halfStr = "H" + mHalf;
+        // --- Main match screen ---
         
-        // Show time over target if exceeded
+        // Top banner: kick timer or sin bin
+        drawTopBanner(dc, width);
+        
+        // Half indicator
+        var halfStr = "H" + mHalf;
+        dc.setColor(Gfx.COLOR_LT_GRAY, Gfx.COLOR_TRANSPARENT);
+        dc.drawText(centerX, height / 3 - 32, Gfx.FONT_SMALL, halfStr, Gfx.TEXT_JUSTIFY_CENTER);
+        
+        // Match timer (large, center)
+        var matchTimeStr = formatTime(mMatchTime);
         var timeColor = Gfx.COLOR_WHITE;
         if (mMatchTime >= mHalfDuration) {
             timeColor = Gfx.COLOR_YELLOW;
             var overtime = mMatchTime - mHalfDuration;
-            matchTimeStr = matchTimeStr + " (+" + formatTime(overtime) + ")";
+            matchTimeStr = matchTimeStr + " +" + formatTime(overtime);
         }
-        
         dc.setColor(timeColor, Gfx.COLOR_TRANSPARENT);
-        dc.drawText(width/2, height/3, Gfx.FONT_NUMBER_HOT, matchTimeStr, Gfx.TEXT_JUSTIFY_CENTER);
-        dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
-        dc.drawText(width/2, height/3 - 30, Gfx.FONT_SMALL, halfStr, Gfx.TEXT_JUSTIFY_CENTER);
+        dc.drawText(centerX, height / 3, Gfx.FONT_NUMBER_HOT, matchTimeStr, Gfx.TEXT_JUSTIFY_CENTER);
         
-        // Draw start/stop indicator with 60s reminder
+        // Running / Paused status
         if (mMatchRunning) {
             dc.setColor(Gfx.COLOR_GREEN, Gfx.COLOR_TRANSPARENT);
-            dc.drawText(width/2, height/3 + 40, Gfx.FONT_TINY, "RUNNING", Gfx.TEXT_JUSTIFY_CENTER);
-        } else {
+            dc.drawText(centerX, height / 3 + 42, Gfx.FONT_TINY, "RUNNING", Gfx.TEXT_JUSTIFY_CENTER);
+        } else if (mMatchStarted) {
             dc.setColor(Gfx.COLOR_RED, Gfx.COLOR_TRANSPARENT);
             var statusText = "PAUSED";
-            if (mStoppedTime >= 60 && mReminderEnabled) {
+            if (mStoppedTime > 0 && mReminderEnabled) {
                 statusText = "PAUSED " + mStoppedTime.format("%d") + "s";
             }
-            dc.drawText(width/2, height/3 + 40, Gfx.FONT_TINY, statusText, Gfx.TEXT_JUSTIFY_CENTER);
+            dc.drawText(centerX, height / 3 + 42, Gfx.FONT_TINY, statusText, Gfx.TEXT_JUSTIFY_CENTER);
+        } else {
+            dc.setColor(Gfx.COLOR_DK_GRAY, Gfx.COLOR_TRANSPARENT);
+            dc.drawText(centerX, height / 3 + 42, Gfx.FONT_TINY, "SELECT to start", Gfx.TEXT_JUSTIFY_CENTER);
         }
         
-        // Draw scores with team colors
+        // Scores with team colors
         dc.setColor(mHomeColor, Gfx.COLOR_TRANSPARENT);
-        dc.drawText(width/4, height * 0.7, Gfx.FONT_MEDIUM, mScoreHome.toString(), Gfx.TEXT_JUSTIFY_CENTER);
+        dc.drawText(width / 4, height * 70 / 100, Gfx.FONT_MEDIUM, mScoreHome.toString(), Gfx.TEXT_JUSTIFY_CENTER);
         
         dc.setColor(mAwayColor, Gfx.COLOR_TRANSPARENT);
-        dc.drawText(width * 3/4, height * 0.7, Gfx.FONT_MEDIUM, mScoreAway.toString(), Gfx.TEXT_JUSTIFY_CENTER);
+        dc.drawText(width * 3 / 4, height * 70 / 100, Gfx.FONT_MEDIUM, mScoreAway.toString(), Gfx.TEXT_JUSTIFY_CENTER);
         
         dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
-        dc.drawText(width/4, height * 0.8, Gfx.FONT_TINY, "HOME", Gfx.TEXT_JUSTIFY_CENTER);
-        dc.drawText(width * 3/4, height * 0.8, Gfx.FONT_TINY, "AWAY", Gfx.TEXT_JUSTIFY_CENTER);
+        dc.drawText(width / 4, height * 80 / 100, Gfx.FONT_XTINY, "HOME", Gfx.TEXT_JUSTIFY_CENTER);
+        dc.drawText(width * 3 / 4, height * 80 / 100, Gfx.FONT_XTINY, "AWAY", Gfx.TEXT_JUSTIFY_CENTER);
         
-        // Draw kick timer if active (priority over sin bin)
+        // Separator line between scores
+        dc.setColor(Gfx.COLOR_DK_GRAY, Gfx.COLOR_TRANSPARENT);
+        dc.drawLine(centerX, height * 68 / 100, centerX, height * 85 / 100);
+    }
+    
+    private function drawTopBanner(dc, width) {
         if (mKickTimerActive) {
             var kickColor = mKickTimerTime <= 10 ? Gfx.COLOR_RED : Gfx.COLOR_ORANGE;
             dc.setColor(kickColor, Gfx.COLOR_TRANSPARENT);
-            dc.fillRectangle(0, 0, width, 30);
+            dc.fillRectangle(0, 0, width, 28);
             dc.setColor(Gfx.COLOR_BLACK, Gfx.COLOR_TRANSPARENT);
-            var kickTypeStr = mKickTimerType == :conversion ? "CONVERSION" : "PENALTY KICK";
+            var kickTypeStr = mKickTimerType == :conversion ? "CONV" : "PEN KICK";
             var kickStr = kickTypeStr + ": " + mKickTimerTime.format("%d") + "s";
-            dc.drawText(width/2, 5, Gfx.FONT_TINY, kickStr, Gfx.TEXT_JUSTIFY_CENTER);
+            dc.drawText(width / 2, 4, Gfx.FONT_TINY, kickStr, Gfx.TEXT_JUSTIFY_CENTER);
         } else if (mSinBinActive) {
-            // Draw sin bin if active
             dc.setColor(Gfx.COLOR_YELLOW, Gfx.COLOR_TRANSPARENT);
-            dc.fillRectangle(0, 0, width, 30);
+            dc.fillRectangle(0, 0, width, 28);
             dc.setColor(Gfx.COLOR_BLACK, Gfx.COLOR_TRANSPARENT);
             var sinBinStr = "SIN BIN: " + formatTime(mSinBinTime);
-            dc.drawText(width/2, 5, Gfx.FONT_TINY, sinBinStr, Gfx.TEXT_JUSTIFY_CENTER);
+            dc.drawText(width / 2, 4, Gfx.FONT_TINY, sinBinStr, Gfx.TEXT_JUSTIFY_CENTER);
         }
+    }
+    
+    private function drawHalfTimeScreen(dc, width, height) {
+        var centerX = width / 2;
         
-        // Draw menu hint
-        dc.setColor(Gfx.COLOR_DK_GRAY, Gfx.COLOR_TRANSPARENT);
-        dc.drawText(width/2, height - 20, Gfx.FONT_XTINY, "MENU for more", Gfx.TEXT_JUSTIFY_CENTER);
+        // Score at half time
+        dc.setColor(mHomeColor, Gfx.COLOR_TRANSPARENT);
+        dc.drawText(width / 3, 15, Gfx.FONT_MEDIUM, mScoreHome.toString(), Gfx.TEXT_JUSTIFY_CENTER);
+        dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
+        dc.drawText(centerX, 15, Gfx.FONT_MEDIUM, "-", Gfx.TEXT_JUSTIFY_CENTER);
+        dc.setColor(mAwayColor, Gfx.COLOR_TRANSPARENT);
+        dc.drawText(width * 2 / 3, 15, Gfx.FONT_MEDIUM, mScoreAway.toString(), Gfx.TEXT_JUSTIFY_CENTER);
+        
+        dc.setColor(Gfx.COLOR_ORANGE, Gfx.COLOR_TRANSPARENT);
+        dc.drawText(centerX, height / 4 + 5, Gfx.FONT_LARGE, "HALF TIME", Gfx.TEXT_JUSTIFY_CENTER);
+        
+        dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
+        var breakTimeStr = formatTime(mBreakTime);
+        dc.drawText(centerX, height / 2, Gfx.FONT_NUMBER_HOT, breakTimeStr, Gfx.TEXT_JUSTIFY_CENTER);
+        
+        var breakColor = mBreakTime >= mBreakDuration ? Gfx.COLOR_YELLOW : Gfx.COLOR_DK_GRAY;
+        dc.setColor(breakColor, Gfx.COLOR_TRANSPARENT);
+        dc.drawText(centerX, height * 70 / 100, Gfx.FONT_SMALL, "Break", Gfx.TEXT_JUSTIFY_CENTER);
+        dc.drawText(centerX, height - 22, Gfx.FONT_XTINY, "SELECT to start H2", Gfx.TEXT_JUSTIFY_CENTER);
     }
     
     private function drawMatchSummary(dc, width, height) {
+        var centerX = width / 2;
+        
         dc.setColor(Gfx.COLOR_GREEN, Gfx.COLOR_TRANSPARENT);
-        dc.drawText(width/2, 10, Gfx.FONT_MEDIUM, "FULL TIME", Gfx.TEXT_JUSTIFY_CENTER);
+        dc.drawText(centerX, 12, Gfx.FONT_MEDIUM, "FULL TIME", Gfx.TEXT_JUSTIFY_CENTER);
         
         // Final score
         dc.setColor(mHomeColor, Gfx.COLOR_TRANSPARENT);
-        dc.drawText(width/3, height/3, Gfx.FONT_NUMBER_HOT, mScoreHome.toString(), Gfx.TEXT_JUSTIFY_CENTER);
+        dc.drawText(width / 3, height / 3, Gfx.FONT_NUMBER_HOT, mScoreHome.toString(), Gfx.TEXT_JUSTIFY_CENTER);
         
         dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
-        dc.drawText(width/2, height/3, Gfx.FONT_NUMBER_HOT, "-", Gfx.TEXT_JUSTIFY_CENTER);
+        dc.drawText(centerX, height / 3, Gfx.FONT_NUMBER_HOT, "-", Gfx.TEXT_JUSTIFY_CENTER);
         
         dc.setColor(mAwayColor, Gfx.COLOR_TRANSPARENT);
-        dc.drawText(width * 2/3, height/3, Gfx.FONT_NUMBER_HOT, mScoreAway.toString(), Gfx.TEXT_JUSTIFY_CENTER);
+        dc.drawText(width * 2 / 3, height / 3, Gfx.FONT_NUMBER_HOT, mScoreAway.toString(), Gfx.TEXT_JUSTIFY_CENTER);
         
         // Team labels
         dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
-        dc.drawText(width/3, height/3 + 35, Gfx.FONT_TINY, "HOME", Gfx.TEXT_JUSTIFY_CENTER);
-        dc.drawText(width * 2/3, height/3 + 35, Gfx.FONT_TINY, "AWAY", Gfx.TEXT_JUSTIFY_CENTER);
+        dc.drawText(width / 3, height / 3 + 36, Gfx.FONT_XTINY, "HOME", Gfx.TEXT_JUSTIFY_CENTER);
+        dc.drawText(width * 2 / 3, height / 3 + 36, Gfx.FONT_XTINY, "AWAY", Gfx.TEXT_JUSTIFY_CENTER);
         
         // Match stats
-        var h1Time = mHalf == 1 ? mMatchTime : mHalfDuration;
-        dc.setColor(Gfx.COLOR_DK_GRAY, Gfx.COLOR_TRANSPARENT);
-        dc.drawText(width/2, height * 0.65, Gfx.FONT_SMALL, "Match Stats:", Gfx.TEXT_JUSTIFY_CENTER);
-        dc.drawText(width/2, height * 0.75, Gfx.FONT_TINY, "H1: " + formatTime(h1Time), Gfx.TEXT_JUSTIFY_CENTER);
+        dc.setColor(Gfx.COLOR_LT_GRAY, Gfx.COLOR_TRANSPARENT);
+        dc.drawText(centerX, height * 62 / 100, Gfx.FONT_TINY, "H1: " + formatTime(mH1FinalTime), Gfx.TEXT_JUSTIFY_CENTER);
         if (mHalf == 2) {
-            dc.drawText(width/2, height * 0.82, Gfx.FONT_TINY, "H2: " + formatTime(mMatchTime), Gfx.TEXT_JUSTIFY_CENTER);
+            dc.drawText(centerX, height * 72 / 100, Gfx.FONT_TINY, "H2: " + formatTime(mMatchTime), Gfx.TEXT_JUSTIFY_CENTER);
         }
         
-        dc.drawText(width/2, height - 20, Gfx.FONT_XTINY, "MENU to reset", Gfx.TEXT_JUSTIFY_CENTER);
+        dc.setColor(Gfx.COLOR_DK_GRAY, Gfx.COLOR_TRANSPARENT);
+        dc.drawText(centerX, height - 22, Gfx.FONT_XTINY, "MENU to reset", Gfx.TEXT_JUSTIFY_CENTER);
     }
 
     function onHide() {
-        mTimer.stop();
-        mTimerRunning = false;
+        // IMPORTANT: Do NOT stop the timer here!
+        // onHide is called when menus are pushed on top of this view.
+        // The match timer, sin bin, and kick timers must keep running
+        // even while the user navigates menus.
+    }
+
+    // --- Timer management ---
+    // The hardware timer drives ALL countdown/countup logic.
+    // We keep it running whenever anything needs ticking, and stop
+    // it only when the app is truly idle.
+    
+    private function ensureTimerState() {
+        var needsTimer = mMatchRunning
+            || mSinBinActive
+            || mKickTimerActive
+            || mHalfTimeBreak
+            || (mMatchStarted && !mMatchRunning && !mMatchFinished);
+        
+        if (needsTimer && !mTimerRunning) {
+            mTimer.start(method(:onTimerTick), 1000, true);
+            mTimerRunning = true;
+        } else if (!needsTimer && mTimerRunning) {
+            mTimer.stop();
+            mTimerRunning = false;
+        }
     }
 
     function toggleTimer() {
@@ -215,40 +263,50 @@ class RugbyRefView extends Ui.View {
             mBreakTime = 0;
             mHalf = 2;
             mMatchTime = 0;
+            mMatchRunning = false;
+            ensureTimerState();
             Ui.requestUpdate();
             return;
         }
         
+        // Ignore if match is finished
+        if (mMatchFinished) {
+            return;
+        }
+        
         if (mMatchRunning) {
+            // Pause the match
             mMatchRunning = false;
             mStoppedTime = 0;
             mHasVibrated60s = false;
-            mTimer.stop();
-            mTimerRunning = false;
         } else {
+            // Start / resume the match
             mMatchRunning = true;
+            mMatchStarted = true;
             mStoppedTime = 0;
-            mTimer.start(method(:onTimerTick), 1000, true);
-            mTimerRunning = true;
         }
+        
+        ensureTimerState();
         Ui.requestUpdate();
     }
     
     function onTimerTick() {
+        // Half-time break counter
         if (mHalfTimeBreak) {
             mBreakTime++;
             if (mBreakTime == mBreakDuration) {
                 vibrate();
             }
-        } else if (mMatchRunning) {
+        }
+        
+        // Match clock
+        if (mMatchRunning) {
             mMatchTime++;
-            
-            // Check if half is over (only vibrate once)
             if (mMatchTime == mHalfDuration) {
                 vibrate();
             }
-        } else {
-            // Timer stopped - track for 60s reminder
+        } else if (mMatchStarted && !mMatchFinished && !mHalfTimeBreak) {
+            // Clock is stopped mid-match: track for 60s reminder
             mStoppedTime++;
             if (mStoppedTime == 60 && mReminderEnabled && !mHasVibrated60s) {
                 vibrateShort();
@@ -256,7 +314,7 @@ class RugbyRefView extends Ui.View {
             }
         }
         
-        // Update sin bin
+        // Sin bin countdown (ticks regardless of match running state)
         if (mSinBinActive) {
             mSinBinTime--;
             if (mSinBinTime <= 0) {
@@ -265,34 +323,24 @@ class RugbyRefView extends Ui.View {
             }
         }
         
-        // Update kick timer
+        // Kick timer countdown
         if (mKickTimerActive) {
             mKickTimerTime--;
             if (mKickTimerTime <= 0) {
                 mKickTimerActive = false;
                 vibrate();
             } else if (mKickTimerTime == 10) {
-                vibrateShort(); // Warning at 10s
+                vibrateShort();
             }
         }
         
+        ensureTimerState();
         Ui.requestUpdate();
     }
     
-    function startSinBin() {
-        mSinBinActive = true;
-        mSinBinTime = mSinBinDuration;
-        vibrate();
-        Ui.requestUpdate();
-    }
-    
-    function stopSinBin() {
-        mSinBinActive = false;
-        Ui.requestUpdate();
-    }
+    // --- Score management ---
     
     function addScoreHome(points) {
-        // Save to history for undo
         mScoreHistory.add({
             "team" => :home,
             "points" => points,
@@ -304,7 +352,6 @@ class RugbyRefView extends Ui.View {
     }
     
     function addScoreAway(points) {
-        // Save to history for undo
         mScoreHistory.add({
             "team" => :away,
             "points" => points,
@@ -317,7 +364,7 @@ class RugbyRefView extends Ui.View {
     
     function undoLastScore() {
         if (mScoreHistory.size() == 0) {
-            return false;
+            return;
         }
         
         var lastScore = mScoreHistory[mScoreHistory.size() - 1];
@@ -329,25 +376,56 @@ class RugbyRefView extends Ui.View {
         
         mScoreHistory = mScoreHistory.slice(0, mScoreHistory.size() - 1);
         Ui.requestUpdate();
-        return true;
+    }
+    
+    // --- Match flow ---
+    
+    function startSinBin() {
+        mSinBinActive = true;
+        mSinBinTime = mSinBinDuration;
+        ensureTimerState();
+        vibrate();
+        Ui.requestUpdate();
+    }
+    
+    function stopSinBin() {
+        mSinBinActive = false;
+        ensureTimerState();
+        Ui.requestUpdate();
+    }
+    
+    function startKickTimer(kickType) {
+        mKickTimerActive = true;
+        mKickTimerType = kickType;
+        mKickTimerTime = kickType == :conversion ? 60 : 90;
+        ensureTimerState();
+        vibrateShort();
+        Ui.requestUpdate();
+    }
+    
+    function stopKickTimer() {
+        mKickTimerActive = false;
+        ensureTimerState();
+        Ui.requestUpdate();
     }
     
     function startHalfTime() {
+        mH1FinalTime = mMatchTime;
         mHalfTimeBreak = true;
         mBreakTime = 0;
         mMatchRunning = false;
-        // Keep timer running to track break
-        if (!mTimerRunning) {
-            mTimer.start(method(:onTimerTick), 1000, true);
-            mTimerRunning = true;
-        }
+        ensureTimerState();
         vibrate();
         Ui.requestUpdate();
     }
     
     function finishMatch() {
+        if (mHalf == 1) {
+            mH1FinalTime = mMatchTime;
+        }
         mMatchFinished = true;
         mMatchRunning = false;
+        mKickTimerActive = false;
         mTimer.stop();
         mTimerRunning = false;
         vibrate();
@@ -360,12 +438,14 @@ class RugbyRefView extends Ui.View {
         mScoreHome = 0;
         mScoreAway = 0;
         mMatchRunning = false;
+        mMatchStarted = false;
         mSinBinActive = false;
         mHalfTimeBreak = false;
         mBreakTime = 0;
         mMatchFinished = false;
         mStoppedTime = 0;
         mHasVibrated60s = false;
+        mH1FinalTime = 0;
         mScoreHistory = [];
         mKickTimerActive = false;
         mTimer.stop();
@@ -373,49 +453,7 @@ class RugbyRefView extends Ui.View {
         Ui.requestUpdate();
     }
     
-    function startKickTimer(kickType) {
-        mKickTimerActive = true;
-        mKickTimerType = kickType;
-        mKickTimerTime = kickType == :conversion ? 60 : 90;
-        
-        // Start timer if not running
-        if (!mTimerRunning) {
-            mTimer.start(method(:onTimerTick), 1000, true);
-            mTimerRunning = true;
-        }
-        vibrateShort();
-        Ui.requestUpdate();
-    }
-    
-    function stopKickTimer() {
-        mKickTimerActive = false;
-        Ui.requestUpdate();
-    }
-    
-    function getSettings() {
-        return {
-            "halfDuration" => mHalfDuration,
-            "sinBinDuration" => mSinBinDuration,
-            "breakDuration" => mBreakDuration,
-            "vibrateEnabled" => mVibrateEnabled
-        };
-    }
-    
-    function updateSettings(settings) {
-        if (settings.hasKey("halfDuration")) {
-            mHalfDuration = settings["halfDuration"];
-        }
-        if (settings.hasKey("sinBinDuration")) {
-            mSinBinDuration = settings["sinBinDuration"];
-        }
-        if (settings.hasKey("breakDuration")) {
-            mBreakDuration = settings["breakDuration"];
-        }
-        if (settings.hasKey("vibrateEnabled")) {
-            mVibrateEnabled = settings["vibrateEnabled"];
-        }
-        Ui.requestUpdate();
-    }
+    // --- Helpers ---
     
     private function formatTime(seconds) {
         var mins = seconds / 60;
@@ -424,10 +462,7 @@ class RugbyRefView extends Ui.View {
     }
     
     private function vibrate() {
-        if (!mVibrateEnabled) {
-            return;
-        }
-        
+        if (!mVibrateEnabled) { return; }
         if (Attention has :vibrate) {
             var vibeData = [
                 new Attention.VibeProfile(50, 200),
@@ -439,20 +474,13 @@ class RugbyRefView extends Ui.View {
     }
     
     private function vibrateShort() {
-        if (!mVibrateEnabled) {
-            return;
-        }
-        
+        if (!mVibrateEnabled) { return; }
         if (Attention has :vibrate) {
             var vibeData = [
                 new Attention.VibeProfile(50, 100)
             ];
             Attention.vibrate(vibeData);
         }
-    }
-    
-    function isTimerRunning() {
-        return mMatchRunning or mHalfTimeBreak;
     }
     
     function isMatchFinished() {
