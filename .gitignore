@@ -1,10 +1,14 @@
 bin/
 .vscode/
+.idea/
+.DS_Store
 *.prg
 *.debug.xml
 *.iq
-.DS_Store
-.idea/
+*.png.bak
+simulator.log
+*.log
+Screenshot*
 gen/
 bin/
 internal-mir/
