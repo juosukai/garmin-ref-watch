@@ -314,8 +314,8 @@ class RugbyRefView extends Ui.View {
             }
         }
         
-        // Sin bin countdown (ticks regardless of match running state)
-        if (mSinBinActive) {
+        // Sin bin countdown (only ticks during playing time)
+        if (mSinBinActive && mMatchRunning) {
             mSinBinTime--;
             if (mSinBinTime <= 0) {
                 mSinBinActive = false;
