@@ -6,13 +6,18 @@ class SettingsMenu extends Ui.Menu2 {
     function initialize() {
         Menu2.initialize({:title=>"Settings"});
         
+        var vibrateOn = Storage.getValue("vibrateEnabled");
+        if (vibrateOn == null) { vibrateOn = true; }
+        var reminderOn = Storage.getValue("reminderEnabled");
+        if (reminderOn == null) { reminderOn = true; }
+        
         addItem(new Ui.MenuItem("Match Format", null, :match_format, {}));
         addItem(new Ui.MenuItem("Half Duration", null, :half_duration, {}));
         addItem(new Ui.MenuItem("Sin Bin Duration", null, :sin_bin_duration, {}));
         addItem(new Ui.MenuItem("Break Duration", null, :break_duration, {}));
         addItem(new Ui.MenuItem("Team Colors", null, :team_colors, {}));
-        addItem(new Ui.MenuItem("Vibration", null, :vibrate, {}));
-        addItem(new Ui.MenuItem("60s Reminder", null, :reminder, {}));
+        addItem(new Ui.MenuItem("Vibration", vibrateOn ? "ON" : "OFF", :vibrate, {}));
+        addItem(new Ui.MenuItem("60s Reminder", reminderOn ? "ON" : "OFF", :reminder, {}));
     }
 }
 
@@ -44,10 +49,16 @@ class SettingsMenuDelegate extends Ui.Menu2InputDelegate {
             Ui.pushView(menu, new TeamColorsMenuDelegate(mView), Ui.SLIDE_UP);
         } else if (id == :vibrate) {
             toggleVibration();
+            // Reopen settings to show updated state
             Ui.popView(Ui.SLIDE_IMMEDIATE);
+            var menu = new SettingsMenu();
+            Ui.pushView(menu, new SettingsMenuDelegate(mView), Ui.SLIDE_IMMEDIATE);
         } else if (id == :reminder) {
             toggleReminder();
+            // Reopen settings to show updated state
             Ui.popView(Ui.SLIDE_IMMEDIATE);
+            var menu = new SettingsMenu();
+            Ui.pushView(menu, new SettingsMenuDelegate(mView), Ui.SLIDE_IMMEDIATE);
         }
     }
     
