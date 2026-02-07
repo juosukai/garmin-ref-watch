@@ -486,4 +486,8 @@ class RugbyRefView extends Ui.View {
     function isMatchFinished() {
         return mMatchFinished;
     }
+    
+    function isMatchActive() {
+        return mMatchStarted && !mMatchFinished;
+    }
 }

@@ -37,7 +37,11 @@ class RugbyRefDelegate extends Ui.BehaviorDelegate {
     }
     
     function onBack() {
-        // Allow back to exit
+        // Block exit while a match is in progress to prevent accidental loss
+        if (mView.isMatchActive()) {
+            return true;
+        }
+        // Allow exit when no match is running
         return false;
     }
 }
@@ -73,6 +77,8 @@ class MainMenuDelegate extends Ui.MenuInputDelegate {
         } else if (item == :settings) {
             var settingsView = new SettingsMenu();
             Ui.pushView(settingsView, new SettingsMenuDelegate(mView), Ui.SLIDE_UP);
+        } else if (item == :exit_app) {
+            Sys.exit();
         }
     }
 }
