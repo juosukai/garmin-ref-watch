@@ -4,6 +4,7 @@ using Toybox.System as Sys;
 using Toybox.Timer as Timer;
 using Toybox.Attention as Attention;
 using Toybox.Application.Storage as Storage;
+using Toybox.ActivityRecording;
 
 class RugbyRefView extends Ui.View {
 
@@ -37,6 +38,9 @@ class RugbyRefView extends Ui.View {
     private var mTimer;
     private var mTimerRunning = false;
     
+    // Activity Recording
+    private var mSession;
+
     // Settings (loaded from storage)
     private var mHalfDuration = 2400;     // 40 minutes default
     private var mSinBinDuration = 600;    // 10 minutes default
@@ -256,6 +260,14 @@ class RugbyRefView extends Ui.View {
         }
     }
 
+    function createSession() {
+        return ActivityRecording.createSession({
+            :name => "Rugby Referee",
+            :sport => ActivityRecording.SPORT_GENERIC,
+            :subSport => ActivityRecording.SUB_SPORT_MATCH
+        });
+    }
+
     function toggleTimer() {
         // If in half-time break, start second half
         if (mHalfTimeBreak) {
@@ -284,6 +296,12 @@ class RugbyRefView extends Ui.View {
             mMatchRunning = true;
             mMatchStarted = true;
             mStoppedTime = 0;
+
+            // Start activity recording if this is the first start
+            if (mSession == null) {
+                mSession = createSession();
+                mSession.start();
+            }
         }
         
         ensureTimerState();
@@ -429,6 +447,16 @@ class RugbyRefView extends Ui.View {
         mTimer.stop();
         mTimerRunning = false;
         vibrate();
+
+        // Save recording
+        if (mSession != null) {
+            if (mSession.isRecording()) {
+                mSession.stop();
+            }
+            mSession.save();
+            mSession = null;
+        }
+
         Ui.requestUpdate();
     }
     
@@ -450,6 +478,16 @@ class RugbyRefView extends Ui.View {
         mKickTimerActive = false;
         mTimer.stop();
         mTimerRunning = false;
+
+        // Discard recording if active
+        if (mSession != null) {
+            if (mSession.isRecording()) {
+                mSession.stop();
+            }
+            mSession.discard();
+            mSession = null;
+        }
+
         Ui.requestUpdate();
     }
     

@@ -17,16 +17,14 @@ class RugbyRefDelegate extends Ui.BehaviorDelegate {
     }
     
     function onNextPage() {
-        // Score for home team (DOWN button)
-        var menu = new ScoreMenu(:home);
-        Ui.pushView(menu, new ScoreMenuDelegate(mView, :home), Ui.SLIDE_UP);
+        // Penalty kick timer (DOWN button)
+        mView.startKickTimer(:penalty);
         return true;
     }
     
     function onPreviousPage() {
-        // Score for away team (UP button)
-        var menu = new ScoreMenu(:away);
-        Ui.pushView(menu, new ScoreMenuDelegate(mView, :away), Ui.SLIDE_DOWN);
+        // Conversion timer (UP button)
+        mView.startKickTimer(:conversion);
         return true;
     }
 
@@ -56,7 +54,13 @@ class MainMenuDelegate extends Ui.MenuInputDelegate {
     }
 
     function onMenuItem(item) {
-        if (item == :sin_bin_start) {
+        if (item == :score_home) {
+            var menu = new ScoreMenu(:home);
+            Ui.pushView(menu, new ScoreMenuDelegate(mView, :home), Ui.SLIDE_UP);
+        } else if (item == :score_away) {
+            var menu = new ScoreMenu(:away);
+            Ui.pushView(menu, new ScoreMenuDelegate(mView, :away), Ui.SLIDE_DOWN);
+        } else if (item == :sin_bin_start) {
             mView.startSinBin();
         } else if (item == :sin_bin_stop) {
             mView.stopSinBin();
