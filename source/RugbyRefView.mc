@@ -42,9 +42,9 @@ class RugbyRefView extends Ui.View {
     private var mSession;
 
     // Settings (loaded from storage)
-    private var mHalfDuration = 2400;     // 40 minutes default
-    private var mSinBinDuration = 600;    // 10 minutes default
-    private var mBreakDuration = 600;     // 10 minutes default
+    private var mHalfDuration = RugbyConstants.DEFAULT_HALF_DURATION;     // 40 minutes default
+    private var mSinBinDuration = RugbyConstants.DEFAULT_SIN_BIN_DURATION;    // 10 minutes default
+    private var mBreakDuration = RugbyConstants.DEFAULT_BREAK_DURATION;     // 10 minutes default
     private var mVibrateEnabled = true;
     private var mHomeColor = Gfx.COLOR_BLUE;
     private var mAwayColor = Gfx.COLOR_RED;
@@ -326,7 +326,7 @@ class RugbyRefView extends Ui.View {
         } else if (mMatchStarted && !mMatchFinished && !mHalfTimeBreak) {
             // Clock is stopped mid-match: track for 60s reminder
             mStoppedTime++;
-            if (mStoppedTime == 60 && mReminderEnabled && !mHasVibrated60s) {
+            if (mStoppedTime == RugbyConstants.PAUSE_REMINDER_TIME && mReminderEnabled && !mHasVibrated60s) {
                 vibrateShort();
                 mHasVibrated60s = true;
             }
@@ -347,7 +347,7 @@ class RugbyRefView extends Ui.View {
             if (mKickTimerTime <= 0) {
                 mKickTimerActive = false;
                 vibrate();
-            } else if (mKickTimerTime == 10) {
+            } else if (mKickTimerTime == RugbyConstants.KICK_TIMER_WARNING) {
                 vibrateShort();
             }
         }
@@ -415,7 +415,7 @@ class RugbyRefView extends Ui.View {
     function startKickTimer(kickType) {
         mKickTimerActive = true;
         mKickTimerType = kickType;
-        mKickTimerTime = kickType == :conversion ? 60 : 90;
+        mKickTimerTime = kickType == :conversion ? RugbyConstants.KICK_TIMER_CONVERSION : RugbyConstants.KICK_TIMER_PENALTY;
         ensureTimerState();
         vibrateShort();
         Ui.requestUpdate();
