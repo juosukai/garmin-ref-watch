@@ -392,7 +392,7 @@ class RugbyRefView extends Ui.View {
             mScoreAway -= lastScore["points"];
         }
         
-        mScoreHistory = mScoreHistory.slice(0, mScoreHistory.size() - 1);
+        mScoreHistory.remove(lastScore);
         Ui.requestUpdate();
     }
     
