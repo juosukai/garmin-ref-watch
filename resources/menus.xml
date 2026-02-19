@@ -1,5 +1,7 @@
 <menus>
     <menu id="MainMenu">
+        <menu-item id="score_home">Home Score</menu-item>
+        <menu-item id="score_away">Away Score</menu-item>
         <menu-item id="undo_score">Undo Last Score</menu-item>
         <menu-item id="kick_conversion">Conversion (60s)</menu-item>
         <menu-item id="kick_penalty">Penalty Kick (90s)</menu-item>
