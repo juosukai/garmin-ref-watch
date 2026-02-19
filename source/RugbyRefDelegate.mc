@@ -87,10 +87,10 @@ class ScoreMenu extends Ui.Menu2 {
     function initialize(team) {
         Menu2.initialize({:title=>(team == :home ? "Home Score" : "Away Score")});
         
-        addItem(new Ui.MenuItem("Try (5 pts)", null, :try, {}));
-        addItem(new Ui.MenuItem("Conversion (2 pts)", null, :conversion, {}));
-        addItem(new Ui.MenuItem("Penalty (3 pts)", null, :penalty, {}));
-        addItem(new Ui.MenuItem("Drop Goal (3 pts)", null, :drop, {}));
+        addItem(new Ui.MenuItem("Try (" + RugbyConstants.SCORE_TRY + " pts)", null, :try, {}));
+        addItem(new Ui.MenuItem("Conversion (" + RugbyConstants.SCORE_CONVERSION + " pts)", null, :conversion, {}));
+        addItem(new Ui.MenuItem("Penalty (" + RugbyConstants.SCORE_PENALTY + " pts)", null, :penalty, {}));
+        addItem(new Ui.MenuItem("Drop Goal (" + RugbyConstants.SCORE_DROP_GOAL + " pts)", null, :drop, {}));
     }
 }
 
@@ -109,11 +109,13 @@ class ScoreMenuDelegate extends Ui.Menu2InputDelegate {
         var id = item.getId();
         
         if (id == :try) {
-            points = 5;
+            points = RugbyConstants.SCORE_TRY;
         } else if (id == :conversion) {
-            points = 2;
-        } else if (id == :penalty or id == :drop) {
-            points = 3;
+            points = RugbyConstants.SCORE_CONVERSION;
+        } else if (id == :penalty) {
+            points = RugbyConstants.SCORE_PENALTY;
+        } else if (id == :drop) {
+            points = RugbyConstants.SCORE_DROP_GOAL;
         }
         
         if (mTeam == :home) {

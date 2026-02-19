@@ -111,24 +111,24 @@ class MatchFormatMenuDelegate extends Ui.Menu2InputDelegate {
 
     function onSelect(item) {
         var id = item.getId();
-        var halfDur = 2400; // default 40 min
-        var sinBinDur = 600; // default 10 min
+        var halfDur = RugbyConstants.DEFAULT_HALF_DURATION; // default 40 min
+        var sinBinDur = RugbyConstants.DEFAULT_SIN_BIN_DURATION; // default 10 min
         
         if (id == :sevens) {
             halfDur = 420;   // 7 minutes
             sinBinDur = 120;  // 2 minutes
         } else if (id == :tens) {
             halfDur = 1200;   // 20 minutes
-            sinBinDur = 600;  // 10 minutes
+            sinBinDur = RugbyConstants.DEFAULT_SIN_BIN_DURATION;  // 10 minutes
         } else if (id == :youth) {
             halfDur = 1500;   // 25 minutes
             sinBinDur = 300;  // 5 minutes
         } else if (id == :twelve) {
             halfDur = 1800;   // 30 minutes
-            sinBinDur = 600;  // 10 minutes
+            sinBinDur = RugbyConstants.DEFAULT_SIN_BIN_DURATION;  // 10 minutes
         } else if (id == :fifteens) {
-            halfDur = 2400;   // 40 minutes
-            sinBinDur = 600;  // 10 minutes
+            halfDur = RugbyConstants.DEFAULT_HALF_DURATION;   // 40 minutes
+            sinBinDur = RugbyConstants.DEFAULT_SIN_BIN_DURATION;  // 10 minutes
         } else if (id == :custom) {
             // Just return to settings menu
             Ui.popView(Ui.SLIDE_IMMEDIATE);
@@ -159,7 +159,7 @@ class HalfDurationMenu extends Ui.Menu2 {
         addItem(new Ui.MenuItem("25 minutes", null, 1500, {}));
         addItem(new Ui.MenuItem("30 minutes", null, 1800, {}));
         addItem(new Ui.MenuItem("35 minutes", null, 2100, {}));
-        addItem(new Ui.MenuItem("40 minutes", null, 2400, {}));
+        addItem(new Ui.MenuItem("40 minutes", null, RugbyConstants.DEFAULT_HALF_DURATION, {}));
     }
 }
 
@@ -191,7 +191,7 @@ class SinBinDurationMenu extends Ui.Menu2 {
         
         addItem(new Ui.MenuItem("2 minutes (7s)", null, 120, {}));
         addItem(new Ui.MenuItem("5 minutes (Youth)", null, 300, {}));
-        addItem(new Ui.MenuItem("10 minutes (15s)", null, 600, {}));
+        addItem(new Ui.MenuItem("10 minutes (15s)", null, RugbyConstants.DEFAULT_SIN_BIN_DURATION, {}));
     }
 }
 
@@ -223,7 +223,7 @@ class BreakDurationMenu extends Ui.Menu2 {
         
         addItem(new Ui.MenuItem("1 minute (7s)", null, 60, {}));
         addItem(new Ui.MenuItem("5 minutes", null, 300, {}));
-        addItem(new Ui.MenuItem("10 minutes", null, 600, {}));
+        addItem(new Ui.MenuItem("10 minutes", null, RugbyConstants.DEFAULT_BREAK_DURATION, {}));
         addItem(new Ui.MenuItem("15 minutes", null, 900, {}));
     }
 }
