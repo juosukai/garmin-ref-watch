@@ -528,4 +528,29 @@ class RugbyRefView extends Ui.View {
     function isMatchActive() {
         return mMatchStarted && !mMatchFinished;
     }
+
+    (:test)
+    function getScoreHome() {
+        return mScoreHome;
+    }
+
+    (:test)
+    function getScoreAway() {
+        return mScoreAway;
+    }
+
+    (:test)
+    function getScoreHistory() {
+        return mScoreHistory;
+    }
+
+    (:test)
+    function setMatchTime(time) {
+        mMatchTime = time;
+    }
+
+    (:test)
+    function setHalf(half) {
+        mHalf = half;
+    }
 }

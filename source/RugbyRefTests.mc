@@ -1,0 +1,94 @@
+using Toybox.Test as Test;
+
+(:test)
+function testAddScoreHome(logger) {
+    var view = new RugbyRefView();
+
+    // Initial state
+    if (view.getScoreHome() != 0) {
+        logger.debug("Initial home score should be 0");
+        return false;
+    }
+
+    // Test adding 5 points (Try)
+    view.setMatchTime(100);
+    view.setHalf(1);
+    view.addScoreHome(5);
+
+    if (view.getScoreHome() != 5) {
+        logger.debug("Home score should be 5 after try");
+        return false;
+    }
+
+    var history = view.getScoreHistory();
+    if (history.size() != 1) {
+        logger.debug("History size should be 1");
+        return false;
+    }
+
+    var entry = history[0];
+    if (entry["team"] != :home) {
+        logger.debug("History entry team should be :home");
+        return false;
+    }
+    if (entry["points"] != 5) {
+        logger.debug("History entry points should be 5");
+        return false;
+    }
+    if (entry["time"] != 100) {
+        logger.debug("History entry time should be 100");
+        return false;
+    }
+    if (entry["half"] != 1) {
+        logger.debug("History entry half should be 1");
+        return false;
+    }
+
+    // Test adding 2 more points (Conversion)
+    view.setMatchTime(120);
+    view.addScoreHome(2);
+
+    if (view.getScoreHome() != 7) {
+        logger.debug("Home score should be 7 after conversion");
+        return false;
+    }
+
+    if (history.size() != 2) {
+        logger.debug("History size should be 2");
+        return false;
+    }
+
+    entry = history[1];
+    if (entry["points"] != 2) {
+        logger.debug("Second history entry points should be 2");
+        return false;
+    }
+    if (entry["time"] != 120) {
+        logger.debug("Second history entry time should be 120");
+        return false;
+    }
+
+    return true;
+}
+
+(:test)
+function testAddScoreHomeAccumulation(logger) {
+    var view = new RugbyRefView();
+
+    view.addScoreHome(5); // Try
+    view.addScoreHome(2); // Conversion
+    view.addScoreHome(3); // Penalty
+
+    if (view.getScoreHome() != 10) {
+        logger.debug("Home score should be 10 after multiple scores (5+2+3)");
+        return false;
+    }
+
+    var history = view.getScoreHistory();
+    if (history.size() != 3) {
+        logger.debug("History size should be 3 after 3 scores");
+        return false;
+    }
+
+    return true;
+}
