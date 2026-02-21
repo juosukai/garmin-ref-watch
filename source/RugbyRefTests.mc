@@ -92,3 +92,55 @@ function testAddScoreHomeAccumulation(logger) {
 
     return true;
 }
+
+(:test)
+function testMatchTimerAlertLogic(logger) {
+    var view = new RugbyRefView();
+    var duration = 100;
+    view.setHalfDuration(duration);
+
+    // Test Case 1: Normal boundary condition
+    view.setMatchTime(duration - 1);
+    view.setMatchRunning(true);
+    view.onTimerTick(); // Should increment to duration and alert
+
+    if (!view.isHalfTimeAlerted()) {
+        logger.debug("Should have alerted at match time == duration");
+        return false;
+    }
+
+    // Reset for next case
+    view.resetMatch();
+    view.setHalfDuration(duration);
+
+    // Test Case 2: Skip condition (Vulnerability fix verification)
+    view.setMatchTime(duration + 5);
+    view.setMatchRunning(true);
+    view.onTimerTick(); // Should increment and alert
+
+    if (!view.isHalfTimeAlerted()) {
+        logger.debug("Should have alerted even if match time > duration (skip vulnerability)");
+        return false;
+    }
+
+    return true;
+}
+
+(:test)
+function testBreakTimerAlertLogic(logger) {
+    var view = new RugbyRefView();
+    var duration = 50;
+    view.setBreakDuration(duration);
+    view.setHalfTimeBreak(true);
+
+    // Test Case 1: Skip condition for break timer
+    view.setBreakTime(duration + 2);
+    view.onTimerTick();
+
+    if (!view.isBreakTimeAlerted()) {
+        logger.debug("Should have alerted for break time skip");
+        return false;
+    }
+
+    return true;
+}

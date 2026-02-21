@@ -11,6 +11,8 @@ class RugbyRefView extends Ui.View {
     // Match state
     private var mMatchTime = 0;          // seconds elapsed in current half
     private var mMatchRunning = false;
+    private var mHalfTimeAlerted = false; // Has the half-time vibration occurred
+    private var mBreakTimeAlerted = false; // Has the break-time vibration occurred
     private var mHalf = 1;               // 1 or 2
     private var mScoreHome = 0;
     private var mScoreAway = 0;
@@ -276,6 +278,7 @@ class RugbyRefView extends Ui.View {
             mHalf = 2;
             mMatchTime = 0;
             mMatchRunning = false;
+            mHalfTimeAlerted = false;
             ensureTimerState();
             Ui.requestUpdate();
             return;
@@ -312,16 +315,18 @@ class RugbyRefView extends Ui.View {
         // Half-time break counter
         if (mHalfTimeBreak) {
             mBreakTime++;
-            if (mBreakTime == mBreakDuration) {
+            if (mBreakTime >= mBreakDuration && !mBreakTimeAlerted) {
                 vibrate();
+                mBreakTimeAlerted = true;
             }
         }
         
         // Match clock
         if (mMatchRunning) {
             mMatchTime++;
-            if (mMatchTime == mHalfDuration) {
+            if (mMatchTime >= mHalfDuration && !mHalfTimeAlerted) {
                 vibrate();
+                mHalfTimeAlerted = true;
             }
         } else if (mMatchStarted && !mMatchFinished && !mHalfTimeBreak) {
             // Clock is stopped mid-match: track for 60s reminder
@@ -431,6 +436,7 @@ class RugbyRefView extends Ui.View {
         mH1FinalTime = mMatchTime;
         mHalfTimeBreak = true;
         mBreakTime = 0;
+        mBreakTimeAlerted = false;
         mMatchRunning = false;
         ensureTimerState();
         vibrate();
@@ -473,6 +479,8 @@ class RugbyRefView extends Ui.View {
         mMatchFinished = false;
         mStoppedTime = 0;
         mHasVibrated60s = false;
+        mHalfTimeAlerted = false;
+        mBreakTimeAlerted = false;
         mH1FinalTime = 0;
         mScoreHistory = [];
         mKickTimerActive = false;
@@ -552,5 +560,40 @@ class RugbyRefView extends Ui.View {
     (:test)
     function setHalf(half) {
         mHalf = half;
+    }
+
+    (:test)
+    function setMatchRunning(running) {
+        mMatchRunning = running;
+    }
+
+    (:test)
+    function isHalfTimeAlerted() {
+        return mHalfTimeAlerted;
+    }
+
+    (:test)
+    function isBreakTimeAlerted() {
+        return mBreakTimeAlerted;
+    }
+
+    (:test)
+    function setBreakTime(time) {
+        mBreakTime = time;
+    }
+
+    (:test)
+    function setHalfTimeBreak(isBreak) {
+        mHalfTimeBreak = isBreak;
+    }
+
+    (:test)
+    function setHalfDuration(duration) {
+        mHalfDuration = duration;
+    }
+
+    (:test)
+    function setBreakDuration(duration) {
+        mBreakDuration = duration;
     }
 }
