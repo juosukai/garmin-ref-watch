@@ -36,6 +36,7 @@ class RugbyRefView extends Ui.View {
     
     // Timer
     private var mTimer;
+    private var mTimerMethod;
     private var mTimerRunning = false;
     
     // Activity Recording
@@ -53,6 +54,9 @@ class RugbyRefView extends Ui.View {
     function initialize() {
         View.initialize();
         mTimer = new Timer.Timer();
+        // Create delegate and cache the method bound to it to avoid circular reference (View -> Method -> View)
+        var delegate = new TimerCallbackDelegate(self);
+        mTimerMethod = delegate.method(:onTimerTick);
         mScoreHistory = [];
         loadSettings();
     }
@@ -252,7 +256,7 @@ class RugbyRefView extends Ui.View {
             || (mMatchStarted && !mMatchRunning && !mMatchFinished);
         
         if (needsTimer && !mTimerRunning) {
-            mTimer.start(method(:onTimerTick), 1000, true);
+            mTimer.start(mTimerMethod, 1000, true);
             mTimerRunning = true;
         } else if (!needsTimer && mTimerRunning) {
             mTimer.stop();
@@ -552,5 +556,19 @@ class RugbyRefView extends Ui.View {
     (:test)
     function setHalf(half) {
         mHalf = half;
+    }
+}
+
+class TimerCallbackDelegate {
+    private var mView;
+
+    function initialize(view) {
+        mView = view.weak();
+    }
+
+    function onTimerTick() {
+        if (mView.stillAlive()) {
+            mView.get().onTimerTick();
+        }
     }
 }
