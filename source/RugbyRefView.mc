@@ -379,26 +379,29 @@ class RugbyRefView extends Ui.View {
     
     // --- Score management ---
     
-    function addScoreHome(points) {
+    function addScore(team, points) {
         mScoreHistory.add({
-            "team" => :home,
+            "team" => team,
             "points" => points,
             "time" => mMatchTime,
             "half" => mHalf
         });
-        mScoreHome += points;
+
+        if (team == :home) {
+            mScoreHome += points;
+        } else {
+            mScoreAway += points;
+        }
+
         Ui.requestUpdate();
     }
     
+    function addScoreHome(points) {
+        addScore(:home, points);
+    }
+
     function addScoreAway(points) {
-        mScoreHistory.add({
-            "team" => :away,
-            "points" => points,
-            "time" => mMatchTime,
-            "half" => mHalf
-        });
-        mScoreAway += points;
-        Ui.requestUpdate();
+        addScore(:away, points);
     }
     
     function undoLastScore() {
