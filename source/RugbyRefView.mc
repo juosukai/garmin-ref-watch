@@ -5,6 +5,7 @@ using Toybox.Timer as Timer;
 using Toybox.Attention as Attention;
 using Toybox.Application.Storage as Storage;
 using Toybox.ActivityRecording;
+using Toybox.Activity as Activity;
 
 class RugbyRefView extends Ui.View {
 
@@ -42,6 +43,7 @@ class RugbyRefView extends Ui.View {
     
     // Activity Recording
     private var mSession;
+
 
     // Settings (loaded from storage)
     private var mHalfDuration = RugbyConstants.DEFAULT_HALF_DURATION;     // 40 minutes default
@@ -238,9 +240,30 @@ class RugbyRefView extends Ui.View {
         
         // Match stats
         dc.setColor(Gfx.COLOR_LT_GRAY, Gfx.COLOR_TRANSPARENT);
-        dc.drawText(centerX, height * 62 / 100, Gfx.FONT_TINY, "H1: " + formatTime(mH1FinalTime), Gfx.TEXT_JUSTIFY_CENTER);
+        var statsY = height * 55 / 100;
+        dc.drawText(centerX, statsY, Gfx.FONT_TINY, "H1: " + formatTime(mH1FinalTime), Gfx.TEXT_JUSTIFY_CENTER);
         if (mHalf == 2) {
-            dc.drawText(centerX, height * 72 / 100, Gfx.FONT_TINY, "H2: " + formatTime(mMatchTime), Gfx.TEXT_JUSTIFY_CENTER);
+            statsY += 18;
+            dc.drawText(centerX, statsY, Gfx.FONT_TINY, "H2: " + formatTime(mMatchTime), Gfx.TEXT_JUSTIFY_CENTER);
+        }
+        
+        // Activity stats (distance, HR)
+        var actInfo = Activity.getActivityInfo();
+        if (actInfo != null) {
+            statsY += 20;
+            dc.setColor(Gfx.COLOR_LT_GRAY, Gfx.COLOR_TRANSPARENT);
+            
+            if (actInfo.elapsedDistance != null) {
+                var distKm = actInfo.elapsedDistance / 1000.0;
+                var distStr = distKm.format("%.1f") + " km";
+                dc.drawText(centerX, statsY, Gfx.FONT_TINY, distStr, Gfx.TEXT_JUSTIFY_CENTER);
+                statsY += 18;
+            }
+            
+            if (actInfo.averageHeartRate != null) {
+                var hrStr = "Avg HR: " + actInfo.averageHeartRate.format("%d");
+                dc.drawText(centerX, statsY, Gfx.FONT_TINY, hrStr, Gfx.TEXT_JUSTIFY_CENTER);
+            }
         }
         
         dc.setColor(Gfx.COLOR_DK_GRAY, Gfx.COLOR_TRANSPARENT);
@@ -275,14 +298,6 @@ class RugbyRefView extends Ui.View {
         }
     }
 
-    function createSession() {
-        return ActivityRecording.createSession({
-            :name => "Rugby Referee",
-            :sport => ActivityRecording.SPORT_GENERIC,
-            :subSport => ActivityRecording.SUB_SPORT_MATCH
-        });
-    }
-
     function toggleTimer() {
         // If in half-time break, start second half
         if (mHalfTimeBreak) {
@@ -309,15 +324,13 @@ class RugbyRefView extends Ui.View {
             mHasVibrated60s = false;
         } else {
             // Start / resume the match
+            if (!mMatchStarted) {
+                // First start: begin GPS/HR activity recording
+                startRecording();
+            }
             mMatchRunning = true;
             mMatchStarted = true;
             mStoppedTime = 0;
-
-            // Start activity recording if this is the first start
-            if (mSession == null) {
-                mSession = createSession();
-                mSession.start();
-            }
         }
         
         ensureTimerState();
@@ -483,21 +496,13 @@ class RugbyRefView extends Ui.View {
         mKickTimerActive = false;
         mTimer.stop();
         mTimerRunning = false;
+        stopRecording(true); // Save the activity
         vibrate();
-
-        // Save recording
-        if (mSession != null) {
-            if (mSession.isRecording()) {
-                mSession.stop();
-            }
-            mSession.save();
-            mSession = null;
-        }
-
         Ui.requestUpdate();
     }
     
     function resetMatch() {
+        stopRecording(false); // Discard any in-progress recording
         mMatchTime = 0;
         mHalf = 1;
         mScoreHome = 0;
@@ -517,16 +522,6 @@ class RugbyRefView extends Ui.View {
         mKickTimerActive = false;
         mTimer.stop();
         mTimerRunning = false;
-
-        // Discard recording if active
-        if (mSession != null) {
-            if (mSession.isRecording()) {
-                mSession.stop();
-            }
-            mSession.discard();
-            mSession = null;
-        }
-
         Ui.requestUpdate();
     }
     
@@ -626,8 +621,37 @@ class RugbyRefView extends Ui.View {
     (:test)
     function setBreakDuration(duration) {
         mBreakDuration = duration;
+    }
+
     function getSinBins() {
         return mSinBins;
+    }
+
+    // --- Activity recording ---
+
+    private function startRecording() {
+        if (mSession == null && (ActivityRecording has :createSession)) {
+            mSession = ActivityRecording.createSession({
+                :name => "Rugby Ref",
+                :sport => ActivityRecording.SPORT_GENERIC,
+                :subSport => ActivityRecording.SUB_SPORT_MATCH
+            });
+            mSession.start();
+        }
+    }
+
+    private function stopRecording(save) {
+        if (mSession != null) {
+            if (mSession.isRecording()) {
+                mSession.stop();
+            }
+            if (save) {
+                mSession.save();
+            } else {
+                mSession.discard();
+            }
+            mSession = null;
+        }
     }
 }
 

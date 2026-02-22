@@ -17,13 +17,14 @@ class RugbyRefDelegate extends Ui.BehaviorDelegate {
     }
     
     function onNextPage() {
-        // Penalty kick timer (DOWN button)
-        mView.startKickTimer(:penalty);
+        // Score menu (DOWN button) - pick team then score type
+        var menu = new TeamSelectMenu();
+        Ui.pushView(menu, new TeamSelectMenuDelegate(mView), Ui.SLIDE_UP);
         return true;
     }
-    
+
     function onPreviousPage() {
-        // Conversion timer (UP button)
+        // Start conversion timer (UP button)
         mView.startKickTimer(:conversion);
         return true;
     }
@@ -84,6 +85,30 @@ class MainMenuDelegate extends Ui.MenuInputDelegate {
         } else if (item == :exit_app) {
             Sys.exit();
         }
+    }
+}
+
+class TeamSelectMenu extends Ui.Menu2 {
+    function initialize() {
+        Menu2.initialize({:title => "Score"});
+        addItem(new Ui.MenuItem("Home", null, :home, {}));
+        addItem(new Ui.MenuItem("Away", null, :away, {}));
+    }
+}
+
+class TeamSelectMenuDelegate extends Ui.Menu2InputDelegate {
+    private var mView;
+
+    function initialize(view) {
+        Menu2InputDelegate.initialize();
+        mView = view;
+    }
+
+    function onSelect(item) {
+        var team = item.getId();
+        Ui.popView(Ui.SLIDE_IMMEDIATE);
+        var menu = new ScoreMenu(team);
+        Ui.pushView(menu, new ScoreMenuDelegate(mView, team), Ui.SLIDE_UP);
     }
 }
 
