@@ -17,9 +17,9 @@ class RugbyRefDelegate extends Ui.BehaviorDelegate {
     }
     
     function onNextPage() {
-        // Score menu (DOWN button) - pick team then score type
-        var menu = new TeamSelectMenu();
-        Ui.pushView(menu, new TeamSelectMenuDelegate(mView), Ui.SLIDE_UP);
+        // Sin bin (DOWN button) - pick team
+        var menu = new SinBinTeamMenu();
+        Ui.pushView(menu, new SinBinTeamMenuDelegate(mView), Ui.SLIDE_UP);
         return true;
     }
 
