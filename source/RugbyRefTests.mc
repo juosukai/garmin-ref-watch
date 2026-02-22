@@ -139,6 +139,13 @@ function testBreakTimerAlertLogic(logger) {
 
     if (!view.isBreakTimeAlerted()) {
         logger.debug("Should have alerted for break time skip");
+        return false;
+    }
+
+    return true;
+}
+
+(:test)
 function testMultipleSinBins(logger) {
     var view = new RugbyRefView();
 
@@ -149,14 +156,14 @@ function testMultipleSinBins(logger) {
     }
 
     // Add first sin bin
-    view.startSinBin();
+    view.startSinBin(:home);
     if (view.getSinBins().size() != 1) {
         logger.debug("Should have 1 sin bin");
         return false;
     }
 
     // Add second sin bin
-    view.startSinBin();
+    view.startSinBin(:home);
     if (view.getSinBins().size() != 2) {
         logger.debug("Should have 2 sin bins");
         return false;

@@ -150,20 +150,23 @@ class RugbyRefView extends Ui.View {
             dc.drawText(centerX, height / 3 + 42, Gfx.FONT_TINY, "SELECT to start", Gfx.TEXT_JUSTIFY_CENTER);
         }
         
-        // Scores with team colors
-        dc.setColor(mHomeColor, Gfx.COLOR_TRANSPARENT);
-        dc.drawText(width / 4, height * 70 / 100, Gfx.FONT_MEDIUM, mScoreHome.toString(), Gfx.TEXT_JUSTIFY_CENTER);
-        
-        dc.setColor(mAwayColor, Gfx.COLOR_TRANSPARENT);
-        dc.drawText(width * 3 / 4, height * 70 / 100, Gfx.FONT_MEDIUM, mScoreAway.toString(), Gfx.TEXT_JUSTIFY_CENTER);
-        
-        dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
-        dc.drawText(width / 4, height * 80 / 100, Gfx.FONT_XTINY, "HOME", Gfx.TEXT_JUSTIFY_CENTER);
-        dc.drawText(width * 3 / 4, height * 80 / 100, Gfx.FONT_XTINY, "AWAY", Gfx.TEXT_JUSTIFY_CENTER);
-        
-        // Separator line between scores
-        dc.setColor(Gfx.COLOR_DK_GRAY, Gfx.COLOR_TRANSPARENT);
-        dc.drawLine(centerX, height * 68 / 100, centerX, height * 85 / 100);
+        // Sin bin list
+        var binY = height * 63 / 100;
+        if (mSinBins.size() > 0) {
+            for (var i = 0; i < mSinBins.size() && i < 4; i++) {
+                var bin = mSinBins[i];
+                var teamStr = bin[:team] == :home ? "HOME" : "AWAY";
+                var teamColor = bin[:team] == :home ? mHomeColor : mAwayColor;
+                dc.setColor(teamColor, Gfx.COLOR_TRANSPARENT);
+                dc.drawText(centerX - 5, binY, Gfx.FONT_TINY, teamStr, Gfx.TEXT_JUSTIFY_RIGHT);
+                dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
+                dc.drawText(centerX + 5, binY, Gfx.FONT_TINY, formatTime(bin[:time]), Gfx.TEXT_JUSTIFY_LEFT);
+                binY += 22;
+            }
+        } else {
+            dc.setColor(Gfx.COLOR_DK_GRAY, Gfx.COLOR_TRANSPARENT);
+            dc.drawText(centerX, binY, Gfx.FONT_TINY, "No sin bins", Gfx.TEXT_JUSTIFY_CENTER);
+        }
     }
     
     private function drawTopBanner(dc, width) {
@@ -175,21 +178,6 @@ class RugbyRefView extends Ui.View {
             var kickTypeStr = mKickTimerType == :conversion ? "CONV" : "PEN KICK";
             var kickStr = kickTypeStr + ": " + mKickTimerTime.format("%d") + "s";
             dc.drawText(width / 2, 4, Gfx.FONT_TINY, kickStr, Gfx.TEXT_JUSTIFY_CENTER);
-        } else if (mSinBins.size() > 0) {
-            dc.setColor(Gfx.COLOR_YELLOW, Gfx.COLOR_TRANSPARENT);
-            dc.fillRectangle(0, 0, width, 28);
-            dc.setColor(Gfx.COLOR_BLACK, Gfx.COLOR_TRANSPARENT);
-
-            var index = 0;
-            if (mSinBins.size() > 1) {
-                index = (Sys.getTimer() / 3000) % mSinBins.size();
-            }
-            var time = mSinBins[index];
-            var sinBinStr = "SIN BIN (" + (index + 1) + "/" + mSinBins.size() + "): " + formatTime(time);
-            if (mSinBins.size() == 1) {
-                sinBinStr = "SIN BIN: " + formatTime(time);
-            }
-            dc.drawText(width / 2, 4, Gfx.FONT_TINY, sinBinStr, Gfx.TEXT_JUSTIFY_CENTER);
         }
     }
     
@@ -368,10 +356,10 @@ class RugbyRefView extends Ui.View {
             var newSinBins = [];
             var vibrated = false;
             for (var i = 0; i < mSinBins.size(); i++) {
-                var t = mSinBins[i];
-                t--;
+                var bin = mSinBins[i];
+                var t = bin[:time] - 1;
                 if (t > 0) {
-                    newSinBins.add(t);
+                    newSinBins.add({:team => bin[:team], :time => t});
                 } else if (!vibrated) {
                     vibrate();
                     vibrated = true;
@@ -380,8 +368,8 @@ class RugbyRefView extends Ui.View {
             mSinBins = newSinBins;
         }
         
-        // Kick timer countdown
-        if (mKickTimerActive) {
+        // Kick timer countdown (only runs when match clock is running)
+        if (mKickTimerActive && mMatchRunning) {
             mKickTimerTime--;
             if (mKickTimerTime <= 0) {
                 mKickTimerActive = false;
@@ -440,22 +428,27 @@ class RugbyRefView extends Ui.View {
     
     // --- Match flow ---
     
-    function startSinBin() {
-        mSinBins.add(mSinBinDuration);
+    function startSinBin(team) {
+        mSinBins.add({:team => team, :time => mSinBinDuration});
         ensureTimerState();
         vibrate();
         Ui.requestUpdate();
     }
-    
+
     function stopSinBin() {
         if (mSinBins.size() > 0) {
-            var minTime = mSinBins[0];
+            // Remove the sin bin closest to expiring
+            var minIdx = 0;
             for (var i = 1; i < mSinBins.size(); i++) {
-                if (mSinBins[i] < minTime) {
-                    minTime = mSinBins[i];
+                if (mSinBins[i][:time] < mSinBins[minIdx][:time]) {
+                    minIdx = i;
                 }
             }
-            mSinBins.remove(minTime);
+            var newBins = [];
+            for (var i = 0; i < mSinBins.size(); i++) {
+                if (i != minIdx) { newBins.add(mSinBins[i]); }
+            }
+            mSinBins = newBins;
         }
         ensureTimerState();
         Ui.requestUpdate();

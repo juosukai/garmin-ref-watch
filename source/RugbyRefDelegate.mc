@@ -17,9 +17,9 @@ class RugbyRefDelegate extends Ui.BehaviorDelegate {
     }
     
     function onNextPage() {
-        // Score menu (DOWN button) - pick team then score type
-        var menu = new TeamSelectMenu();
-        Ui.pushView(menu, new TeamSelectMenuDelegate(mView), Ui.SLIDE_UP);
+        // Sin bin (DOWN button) - pick team
+        var menu = new SinBinTeamMenu();
+        Ui.pushView(menu, new SinBinTeamMenuDelegate(mView), Ui.SLIDE_UP);
         return true;
     }
 
@@ -62,7 +62,8 @@ class MainMenuDelegate extends Ui.MenuInputDelegate {
             var menu = new ScoreMenu(:away);
             Ui.pushView(menu, new ScoreMenuDelegate(mView, :away), Ui.SLIDE_DOWN);
         } else if (item == :sin_bin_start) {
-            mView.startSinBin();
+            var menu = new SinBinTeamMenu();
+            Ui.pushView(menu, new SinBinTeamMenuDelegate(mView), Ui.SLIDE_UP);
         } else if (item == :sin_bin_stop) {
             mView.stopSinBin();
         } else if (item == :half_time) {
@@ -85,6 +86,28 @@ class MainMenuDelegate extends Ui.MenuInputDelegate {
         } else if (item == :exit_app) {
             Sys.exit();
         }
+    }
+}
+
+class SinBinTeamMenu extends Ui.Menu2 {
+    function initialize() {
+        Menu2.initialize({:title => "Sin Bin"});
+        addItem(new Ui.MenuItem("Home", null, :home, {}));
+        addItem(new Ui.MenuItem("Away", null, :away, {}));
+    }
+}
+
+class SinBinTeamMenuDelegate extends Ui.Menu2InputDelegate {
+    private var mView;
+
+    function initialize(view) {
+        Menu2InputDelegate.initialize();
+        mView = view;
+    }
+
+    function onSelect(item) {
+        mView.startSinBin(item.getId());
+        Ui.popView(Ui.SLIDE_IMMEDIATE);
     }
 }
 
