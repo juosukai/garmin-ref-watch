@@ -28,8 +28,7 @@ class RugbyRefView extends Ui.View {
     private var mScoreHistory;
     
     // Sin bin state
-    private var mSinBinActive = false;
-    private var mSinBinTime = 0;         // seconds remaining
+    private var mSinBins;                // Array of seconds remaining
     
     // Conversion/kick timer
     private var mKickTimerActive = false;
@@ -38,6 +37,7 @@ class RugbyRefView extends Ui.View {
     
     // Timer
     private var mTimer;
+    private var mTimerMethod;
     private var mTimerRunning = false;
     
     // Activity Recording
@@ -55,7 +55,11 @@ class RugbyRefView extends Ui.View {
     function initialize() {
         View.initialize();
         mTimer = new Timer.Timer();
+        // Create delegate and cache the method bound to it to avoid circular reference (View -> Method -> View)
+        var delegate = new TimerCallbackDelegate(self);
+        mTimerMethod = delegate.method(:onTimerTick);
         mScoreHistory = [];
+        mSinBins = [];
         loadSettings();
     }
     
@@ -169,11 +173,20 @@ class RugbyRefView extends Ui.View {
             var kickTypeStr = mKickTimerType == :conversion ? "CONV" : "PEN KICK";
             var kickStr = kickTypeStr + ": " + mKickTimerTime.format("%d") + "s";
             dc.drawText(width / 2, 4, Gfx.FONT_TINY, kickStr, Gfx.TEXT_JUSTIFY_CENTER);
-        } else if (mSinBinActive) {
+        } else if (mSinBins.size() > 0) {
             dc.setColor(Gfx.COLOR_YELLOW, Gfx.COLOR_TRANSPARENT);
             dc.fillRectangle(0, 0, width, 28);
             dc.setColor(Gfx.COLOR_BLACK, Gfx.COLOR_TRANSPARENT);
-            var sinBinStr = "SIN BIN: " + formatTime(mSinBinTime);
+
+            var index = 0;
+            if (mSinBins.size() > 1) {
+                index = (Sys.getTimer() / 3000) % mSinBins.size();
+            }
+            var time = mSinBins[index];
+            var sinBinStr = "SIN BIN (" + (index + 1) + "/" + mSinBins.size() + "): " + formatTime(time);
+            if (mSinBins.size() == 1) {
+                sinBinStr = "SIN BIN: " + formatTime(time);
+            }
             dc.drawText(width / 2, 4, Gfx.FONT_TINY, sinBinStr, Gfx.TEXT_JUSTIFY_CENTER);
         }
     }
@@ -248,13 +261,13 @@ class RugbyRefView extends Ui.View {
     
     private function ensureTimerState() {
         var needsTimer = mMatchRunning
-            || mSinBinActive
+            || mSinBins.size() > 0
             || mKickTimerActive
             || mHalfTimeBreak
             || (mMatchStarted && !mMatchRunning && !mMatchFinished);
         
         if (needsTimer && !mTimerRunning) {
-            mTimer.start(method(:onTimerTick), 1000, true);
+            mTimer.start(mTimerMethod, 1000, true);
             mTimerRunning = true;
         } else if (!needsTimer && mTimerRunning) {
             mTimer.stop();
@@ -338,12 +351,20 @@ class RugbyRefView extends Ui.View {
         }
         
         // Sin bin countdown (only ticks during playing time)
-        if (mSinBinActive && mMatchRunning) {
-            mSinBinTime--;
-            if (mSinBinTime <= 0) {
-                mSinBinActive = false;
-                vibrate();
+        if (mMatchRunning && mSinBins.size() > 0) {
+            var newSinBins = [];
+            var vibrated = false;
+            for (var i = 0; i < mSinBins.size(); i++) {
+                var t = mSinBins[i];
+                t--;
+                if (t > 0) {
+                    newSinBins.add(t);
+                } else if (!vibrated) {
+                    vibrate();
+                    vibrated = true;
+                }
             }
+            mSinBins = newSinBins;
         }
         
         // Kick timer countdown
@@ -363,26 +384,29 @@ class RugbyRefView extends Ui.View {
     
     // --- Score management ---
     
-    function addScoreHome(points) {
+    function addScore(team, points) {
         mScoreHistory.add({
-            "team" => :home,
+            "team" => team,
             "points" => points,
             "time" => mMatchTime,
             "half" => mHalf
         });
-        mScoreHome += points;
+
+        if (team == :home) {
+            mScoreHome += points;
+        } else {
+            mScoreAway += points;
+        }
+
         Ui.requestUpdate();
     }
     
+    function addScoreHome(points) {
+        addScore(:home, points);
+    }
+
     function addScoreAway(points) {
-        mScoreHistory.add({
-            "team" => :away,
-            "points" => points,
-            "time" => mMatchTime,
-            "half" => mHalf
-        });
-        mScoreAway += points;
-        Ui.requestUpdate();
+        addScore(:away, points);
     }
     
     function undoLastScore() {
@@ -404,15 +428,22 @@ class RugbyRefView extends Ui.View {
     // --- Match flow ---
     
     function startSinBin() {
-        mSinBinActive = true;
-        mSinBinTime = mSinBinDuration;
+        mSinBins.add(mSinBinDuration);
         ensureTimerState();
         vibrate();
         Ui.requestUpdate();
     }
     
     function stopSinBin() {
-        mSinBinActive = false;
+        if (mSinBins.size() > 0) {
+            var minTime = mSinBins[0];
+            for (var i = 1; i < mSinBins.size(); i++) {
+                if (mSinBins[i] < minTime) {
+                    minTime = mSinBins[i];
+                }
+            }
+            mSinBins.remove(minTime);
+        }
         ensureTimerState();
         Ui.requestUpdate();
     }
@@ -473,7 +504,7 @@ class RugbyRefView extends Ui.View {
         mScoreAway = 0;
         mMatchRunning = false;
         mMatchStarted = false;
-        mSinBinActive = false;
+        mSinBins = [];
         mHalfTimeBreak = false;
         mBreakTime = 0;
         mMatchFinished = false;
@@ -595,5 +626,21 @@ class RugbyRefView extends Ui.View {
     (:test)
     function setBreakDuration(duration) {
         mBreakDuration = duration;
+    function getSinBins() {
+        return mSinBins;
+    }
+}
+
+class TimerCallbackDelegate {
+    private var mView;
+
+    function initialize(view) {
+        mView = view.weak();
+    }
+
+    function onTimerTick() {
+        if (mView.stillAlive()) {
+            mView.get().onTimerTick();
+        }
     }
 }

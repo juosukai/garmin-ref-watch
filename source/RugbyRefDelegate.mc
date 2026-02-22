@@ -122,11 +122,7 @@ class ScoreMenuDelegate extends Ui.Menu2InputDelegate {
             points = RugbyConstants.SCORE_DROP_GOAL;
         }
         
-        if (mTeam == :home) {
-            mView.addScoreHome(points);
-        } else {
-            mView.addScoreAway(points);
-        }
+        mView.addScore(mTeam, points);
         
         Ui.popView(Ui.SLIDE_IMMEDIATE);
     }
