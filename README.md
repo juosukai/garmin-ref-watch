@@ -1,6 +1,6 @@
-# Rugby Referee App for Garmin Fenix 5X
+# Rugby Referee App for Garmin Watches
 
-A free, open-source rugby referee assistant app for Garmin watches.
+A free, open-source rugby referee assistant app for Garmin watches (Fenix 5/6/7/8, Forerunner, Venu, Epix, etc.).
 
 ## Features
 
@@ -75,34 +75,16 @@ A free, open-source rugby referee assistant app for Garmin watches.
 
 ## Building & Installation
 
-### Prerequisites
+For detailed instructions on how to build the app, generate a developer key, and install it on your watch (including sideloading), please see [BUILDING.md](BUILDING.md).
 
-1. Install the [Connect IQ SDK](https://developer.garmin.com/connect-iq/sdk/)
-2. Install Visual Studio Code with the "Monkey C" extension (or use Eclipse)
+### Quick Start
 
-### Build Instructions
+1.  **Install Prerequisites**: VS Code, Monkey C Extension, Connect IQ SDK.
+2.  **Generate Developer Key**: In VS Code, run `Monkey C: Generate a Developer Key`.
+3.  **Build**: Run `Monkey C: Build for Device` and select your device model.
+4.  **Install**: Copy the generated `.prg` file (from `bin/`) to the `GARMIN/APPS/` folder on your watch.
 
-1. Open this project folder in VS Code
-2. Press `Ctrl+Shift+P` (or `Cmd+Shift+P` on Mac)
-3. Select "Monkey C: Build for Device"
-4. Choose "fenix5x" as your target device
-
-### Install on Watch
-
-**Option 1: Using Simulator**
-1. Press `Ctrl+Shift+P` and select "Monkey C: Run in Simulator"
-2. Select "fenix5x" simulator
-
-**Option 2: On Real Device**
-1. Connect your Fenix 5X via USB
-2. Press `Ctrl+Shift+P` and select "Monkey C: Run on Device"
-3. The app will be installed on your watch
-
-**Option 3: Manual Installation**
-1. Build the app (creates a `.prg` file in the `bin` folder)
-2. Connect watch via USB
-3. Copy the `.prg` file to `GARMIN/APPS/` folder on your watch
-4. Disconnect and find the app in your watch's app menu
+For more details on exporting for the store or troubleshooting, refer to the [full build guide](BUILDING.md).
 
 ## Settings & Customization
 
