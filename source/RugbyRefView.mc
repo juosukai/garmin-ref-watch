@@ -386,6 +386,10 @@ class RugbyRefView extends Ui.View {
     // --- Score management ---
     
     function addScore(team, points) {
+        if (mScoreHistory.size() >= RugbyConstants.MAX_SCORE_HISTORY) {
+            mScoreHistory.remove(mScoreHistory[0]);
+        }
+
         mScoreHistory.add({
             "team" => team,
             "points" => points,

@@ -13,4 +13,6 @@ module RugbyConstants {
     const DEFAULT_HALF_DURATION = 2400;
     const DEFAULT_SIN_BIN_DURATION = 600;
     const DEFAULT_BREAK_DURATION = 600;
+
+    const MAX_SCORE_HISTORY = 50;
 }

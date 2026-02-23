@@ -72,6 +72,51 @@ function testAddScoreHome(logger) {
 }
 
 (:test)
+function testScoreHistoryLimit(logger) {
+    var view = new RugbyRefView();
+    var limit = RugbyConstants.MAX_SCORE_HISTORY;
+
+    // Fill the history up to the limit
+    for (var i = 0; i < limit; i++) {
+        view.setMatchTime(i);
+        view.addScoreHome(1);
+    }
+
+    if (view.getScoreHistory().size() != limit) {
+        logger.debug("History size should be equal to limit (" + limit + ")");
+        return false;
+    }
+
+    // Add one more score
+    view.setMatchTime(limit + 1);
+    view.addScoreHome(1);
+
+    // Verify size is still capped
+    var history = view.getScoreHistory();
+    if (history.size() != limit) {
+        logger.debug("History size should remain at limit (" + limit + ")");
+        return false;
+    }
+
+    // Verify the oldest score (time=0) was removed
+    // The first entry should now be the one with time=1
+    var firstEntry = history[0];
+    if (firstEntry["time"] != 1) {
+        logger.debug("First history entry time should be 1 (oldest removed)");
+        return false;
+    }
+
+    // Verify the newest score is present
+    var lastEntry = history[limit - 1];
+    if (lastEntry["time"] != limit + 1) {
+        logger.debug("Last history entry time should be " + (limit + 1));
+        return false;
+    }
+
+    return true;
+}
+
+(:test)
 function testAddScoreHomeAccumulation(logger) {
     var view = new RugbyRefView();
 
