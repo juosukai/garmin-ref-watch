@@ -67,25 +67,25 @@ class RugbyRefView extends Ui.View {
     
     function loadSettings() {
         var halfDur = Storage.getValue("halfDuration");
-        if (halfDur != null) { mHalfDuration = halfDur; }
+        if (halfDur instanceof Number && halfDur > 0) { mHalfDuration = halfDur; }
         
         var sinBinDur = Storage.getValue("sinBinDuration");
-        if (sinBinDur != null) { mSinBinDuration = sinBinDur; }
+        if (sinBinDur instanceof Number && sinBinDur > 0) { mSinBinDuration = sinBinDur; }
         
         var breakDur = Storage.getValue("breakDuration");
-        if (breakDur != null) { mBreakDuration = breakDur; }
+        if (breakDur instanceof Number && breakDur > 0) { mBreakDuration = breakDur; }
         
         var vibrate = Storage.getValue("vibrateEnabled");
-        if (vibrate != null) { mVibrateEnabled = vibrate; }
+        if (vibrate instanceof Boolean) { mVibrateEnabled = vibrate; }
         
         var homeColor = Storage.getValue("homeColor");
-        if (homeColor != null) { mHomeColor = homeColor; }
+        if (homeColor instanceof Number) { mHomeColor = homeColor; }
         
         var awayColor = Storage.getValue("awayColor");
-        if (awayColor != null) { mAwayColor = awayColor; }
+        if (awayColor instanceof Number) { mAwayColor = awayColor; }
         
         var reminder = Storage.getValue("reminderEnabled");
-        if (reminder != null) { mReminderEnabled = reminder; }
+        if (reminder instanceof Boolean) { mReminderEnabled = reminder; }
     }
 
     function onShow() {
@@ -618,6 +618,41 @@ class RugbyRefView extends Ui.View {
 
     function getSinBins() {
         return mSinBins;
+    }
+
+    (:test)
+    function getHalfDuration() {
+        return mHalfDuration;
+    }
+
+    (:test)
+    function getSinBinDuration() {
+        return mSinBinDuration;
+    }
+
+    (:test)
+    function getBreakDuration() {
+        return mBreakDuration;
+    }
+
+    (:test)
+    function isVibrateEnabled() {
+        return mVibrateEnabled;
+    }
+
+    (:test)
+    function getHomeColor() {
+        return mHomeColor;
+    }
+
+    (:test)
+    function getAwayColor() {
+        return mAwayColor;
+    }
+
+    (:test)
+    function isReminderEnabled() {
+        return mReminderEnabled;
     }
 
     // --- Activity recording ---
