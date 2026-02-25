@@ -1,0 +1,39 @@
+name: Build Garmin Connect IQ App
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Decode Developer Key
+      # Check if secret exists
+      if: ${{ secrets.CIQ_DEV_KEY_BASE64 != '' }}
+      run: |
+        echo "${{ secrets.CIQ_DEV_KEY_BASE64 }}" | base64 -d > developer_key.der
+
+    - name: Build for Fenix 5X
+      # Only run if developer key exists
+      if: ${{ hashFiles('developer_key.der') != '' }}
+      uses: blackshadev/garmin-connectiq-build-action@8.4.0
+      with:
+        projectJungle: ./monkey.jungle
+        developerKey: ./developer_key.der
+        outputPath: bin/RugbyRefApp.prg
+        device: fenix5x
+        typeCheck: '0'
+
+    - name: Upload Artifact
+      if: ${{ hashFiles('bin/RugbyRefApp.prg') != '' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: RugbyRefApp-fenix5x
+        path: bin/RugbyRefApp.prg

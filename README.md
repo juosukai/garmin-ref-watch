@@ -87,6 +87,19 @@ A free, open-source rugby referee assistant app for Garmin watches.
 3. Select "Monkey C: Build for Device"
 4. Choose "fenix5x" as your target device
 
+### Automated Build (GitHub Actions)
+
+This repository includes a GitHub Action to automatically build the application on every push.
+
+1.  **Generate Developer Key**: If you haven't already, generate a developer key using the SDK manager or VS Code extension.
+2.  **Base64 Encode Key**: Encode your `.der` key file to base64.
+    -   Linux/Mac: `base64 -w 0 developer_key.der` (copy the output)
+    -   Windows (PowerShell): `[Convert]::ToBase64String([IO.File]::ReadAllBytes("developer_key.der"))`
+3.  **Add Secret**: Go to your repository Settings -> Secrets and variables -> Actions -> New repository secret.
+    -   Name: `CIQ_DEV_KEY_BASE64`
+    -   Value: Paste the base64 string.
+4.  **Download Artifact**: After a successful build, go to the "Actions" tab, select the workflow run, and download the `RugbyRefApp-fenix5x` artifact.
+
 ### Install on Watch
 
 **Option 1: Using Simulator**
