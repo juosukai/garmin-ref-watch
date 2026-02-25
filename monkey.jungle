@@ -1,5 +1,5 @@
 project.manifest = manifest.xml
 
-# Base Fenix 5X configuration
-fenix5x.sourcePath = source
-fenix5x.resourcePath = resources
+# Base configuration
+base.sourcePath = source
+base.resourcePath = resources

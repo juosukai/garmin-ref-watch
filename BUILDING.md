@@ -37,13 +37,14 @@ If you prefer the terminal or want to script the build:
 2.  Run the following command (replace `fenix5x` with your target device ID):
 
 ```bash
-monkeyc -o bin/RugbyRefApp.prg -f monkey.jungle -d fenix5x -y /path/to/developer_key.der
+monkeyc -o bin/RugbyRefApp.prg -f monkey.jungle -d fenix5x -y /path/to/developer_key.der -r
 ```
 
 *   `-o`: Output file path.
 *   `-f`: Project jungle file (usually `monkey.jungle`).
 *   `-d`: Target device ID (e.g., `fenix6`, `fr945`, `venu`).
 *   `-y`: Path to your developer key.
+*   `-r`: **Release build**. Optimizes the code and strips debug symbols. Recommended for distribution.
 
 ## 3. Installing on Your Watch (Sideloading)
 
@@ -57,16 +58,20 @@ To install the app "as is" without going through the Connect IQ Store:
 6.  Safely disconnect/eject your watch from the computer.
 7.  The app should now appear in your activity/app list on the watch.
 
-## 4. Distributing "As Is"
+## 4. Distributing "As Is" (Manual Distribution)
 
-If you want to share the app with friends or teammates directly (bypassing the store):
+If you want to distribute the app directly to users (bypassing the Connect IQ Store), follow these steps:
 
-**Important**: Garmin apps are compiled for **specific device models**. You cannot take a file built for a `fenix5x` and run it on a `venu2`.
+1.  **Identify the Recipient's Device**: You must know the exact model (e.g., Fenix 7 Solar, Forerunner 55).
+2.  **Find the Device ID**: Look up the internal ID in `manifest.xml` or the [Garmin Device Reference](https://developer.garmin.com/connect-iq/compatible-devices/).
+    *   Example: Fenix 6 Pro is `fenix6pro`.
+3.  **Build a Release Version**:
+    *   **VS Code**: Use "Monkey C: Build for Device" (this usually creates an optimized build).
+    *   **Command Line**: Add the `-r` flag to create a release build.
+4.  **Send the `.prg` File**: Send the generated `.prg` file to the user.
+5.  **Installation**: Instruct the user to follow the [Sideloading](#3-installing-on-your-watch-sideloading) instructions above.
 
-1.  **Ask the recipient for their exact watch model** (e.g., Forerunner 245, Fenix 7).
-2.  **Build the app specifically for that device ID** using the steps above.
-3.  **Send them the `.prg` file**.
-4.  Instruct them to follow the "Sideloading" steps above to install it.
+**Note**: You must repeat this process for each unique device model you want to support. The `.prg` file is not universal.
 
 ## Troubleshooting
 

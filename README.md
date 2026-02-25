@@ -1,6 +1,6 @@
-# Rugby Referee App for Garmin Fenix 5X
+# Rugby Referee App for Garmin Watches
 
-A free, open-source rugby referee assistant app for Garmin watches.
+A free, open-source rugby referee assistant app for Garmin watches. Supports Fenix (5/6/7/8), Forerunner, Venu, Epix, and more.
 
 ## Features
 
@@ -87,16 +87,16 @@ For detailed instructions on building, signing, sideloading, and distributing th
 1. Open this project folder in VS Code
 2. Press `Ctrl+Shift+P` (or `Cmd+Shift+P` on Mac)
 3. Select "Monkey C: Build for Device"
-4. Choose "fenix5x" as your target device
+4. Choose your target device (e.g., fenix6, fr955, venu2)
 
 ### Install on Watch
 
 **Option 1: Using Simulator**
 1. Press `Ctrl+Shift+P` and select "Monkey C: Run in Simulator"
-2. Select "fenix5x" simulator
+2. Select your device simulator
 
 **Option 2: On Real Device**
-1. Connect your Fenix 5X via USB
+1. Connect your watch via USB
 2. Press `Ctrl+Shift+P` and select "Monkey C: Run on Device"
 3. The app will be installed on your watch
 
