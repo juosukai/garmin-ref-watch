@@ -26,24 +26,26 @@ To build apps that can run on a physical device (even for personal use), you mus
 2.  Press `Ctrl+Shift+P`.
 3.  Select `Monkey C: Build for Device`.
 4.  Select your device model (e.g., `fenix6`, `fr245`, `venu2`).
+    *   *Note: If you don't see your device, ensure it's listed in `manifest.xml`.*
 5.  Select a directory to save the output.
 6.  The build process will create a `.prg` file (e.g., `RugbyRefApp.prg`) in the chosen directory.
 
 ### Option B: Using Command Line (`monkeyc`)
 
-If you prefer the terminal or want to script the build:
+If you prefer the terminal or want to create a release build:
 
 1.  Ensure the Connect IQ SDK `bin` folder is in your system PATH.
 2.  Run the following command (replace `fenix5x` with your target device ID):
 
 ```bash
-monkeyc -o bin/RugbyRefApp.prg -f monkey.jungle -d fenix5x -y /path/to/developer_key.der
+monkeyc -o bin/RugbyRefApp.prg -f monkey.jungle -d fenix5x -y /path/to/developer_key.der -r
 ```
 
 *   `-o`: Output file path.
 *   `-f`: Project jungle file (usually `monkey.jungle`).
-*   `-d`: Target device ID (e.g., `fenix6`, `fr945`, `venu`).
+*   `-d`: Target device ID (e.g., `fenix6`, `fr945`, `venu`). See `manifest.xml` for a full list of supported IDs.
 *   `-y`: Path to your developer key.
+*   `-r`: **Release build**. This optimizes the code and strips debug symbols, making the app smaller and faster. Recommended for distribution.
 
 ## 3. Installing on Your Watch (Sideloading)
 
@@ -63,16 +65,34 @@ If you want to share the app with friends or teammates directly (bypassing the s
 
 **Important**: Garmin apps are compiled for **specific device models**. You cannot take a file built for a `fenix5x` and run it on a `venu2`.
 
-1.  **Ask the recipient for their exact watch model** (e.g., Forerunner 245, Fenix 7).
-2.  **Build the app specifically for that device ID** using the steps above.
-3.  **Send them the `.prg` file**.
-4.  Instruct them to follow the "Sideloading" steps above to install it.
+### Step-by-Step Guide for Distribution:
+
+1.  **Identify the Recipient's Device**:
+    *   Ask them for their exact watch model (e.g., Forerunner 245 Music, Fenix 7 Solar).
+    *   Find the corresponding ID in `manifest.xml` (e.g., `fr245m`, `fenix7`).
+
+2.  **Build Specifically for That Device**:
+    *   Follow the "Building the App" steps above, selecting their device ID.
+    *   Use the `-r` flag if building via command line for a release build.
+
+3.  **Send the `.prg` File**:
+    *   Locate the generated `.prg` file (e.g., `RugbyRefApp.prg`).
+    *   Send *only* this file to your friend (via email, WhatsApp, etc.).
+    *   They **do not** need the SDK, VS Code, or a developer key.
+
+4.  **Instructions for the Recipient**:
+    *   Tell them to connect their watch to a computer via USB.
+    *   Copy the file to the `GARMIN/APPS/` folder on the watch drive.
+    *   Unplug and play!
 
 ## Troubleshooting
 
 *   **App not showing up?**
-    *   Ensure you built for the correct device model.
-    *   Ensure the `.prg` filename is short and contains only letters/numbers (e.g., `RugbyRef.prg`).
-    *   Ensure the file is in `GARMIN/APPS/`, not just `GARMIN/`.
+    *   **Wrong Device ID**: Ensure you built for the *exact* model (e.g., `fr245` vs `fr245m` matter!).
+    *   **Filename Issues**: Keep the filename short and simple (e.g., `RugbyRef.prg`). Avoid special characters.
+    *   **Wrong Folder**: Ensure the file is in `GARMIN/APPS/`, not just `GARMIN/` or `GARMIN/APPS/LOGS`.
 *   **"iq!" icon appears?**
-    *   This indicates a crash. Create a text file named `LOGS` or `TURNING_ON_LOGGING` (check Garmin docs for specific device instructions) in `GARMIN/APPS/LOGS/` to see error logs.
+    *   This indicates a crash.
+    *   Create a empty text file named `LOGS` inside `GARMIN/APPS/LOGS/`.
+    *   Reproduce the crash.
+    *   Check `GARMIN/APPS/LOGS/CIQ_LOG.YML` for error details.

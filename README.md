@@ -1,4 +1,4 @@
-# Rugby Referee App for Garmin Fenix 5X
+# Rugby Referee App for Garmin Watches
 
 A free, open-source rugby referee assistant app for Garmin watches.
 
@@ -75,36 +75,21 @@ A free, open-source rugby referee assistant app for Garmin watches.
 
 ## Building & Installation
 
-For detailed instructions on building, signing, sideloading, and distributing the app, please see [BUILDING.md](BUILDING.md).
+This project is built using the Garmin Connect IQ SDK.
 
-### Prerequisites
+For detailed instructions on:
+1.  **Building the app** from source
+2.  **Signing** the app (required for physical devices)
+3.  **Sideloading** onto your watch
+4.  **Distributing** the app to friends without using the Store
 
-1. Install the [Connect IQ SDK](https://developer.garmin.com/connect-iq/sdk/)
-2. Install Visual Studio Code with the "Monkey C" extension (or use Eclipse)
+Please see the comprehensive **[BUILDING.md](BUILDING.md)** guide.
 
-### Build Instructions
+### Quick Links
 
-1. Open this project folder in VS Code
-2. Press `Ctrl+Shift+P` (or `Cmd+Shift+P` on Mac)
-3. Select "Monkey C: Build for Device"
-4. Choose "fenix5x" as your target device
-
-### Install on Watch
-
-**Option 1: Using Simulator**
-1. Press `Ctrl+Shift+P` and select "Monkey C: Run in Simulator"
-2. Select "fenix5x" simulator
-
-**Option 2: On Real Device**
-1. Connect your Fenix 5X via USB
-2. Press `Ctrl+Shift+P` and select "Monkey C: Run on Device"
-3. The app will be installed on your watch
-
-**Option 3: Manual Installation**
-1. Build the app (creates a `.prg` file in the `bin` folder)
-2. Connect watch via USB
-3. Copy the `.prg` file to `GARMIN/APPS/` folder on your watch
-4. Disconnect and find the app in your watch's app menu
+*   [How to build for your specific device](BUILDING.md#2-building-the-app)
+*   [How to install manually (Sideload)](BUILDING.md#3-installing-on-your-watch-sideloading)
+*   [How to distribute to friends](BUILDING.md#4-distributing-as-is)
 
 ## Settings & Customization
 
