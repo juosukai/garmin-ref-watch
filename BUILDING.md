@@ -37,13 +37,14 @@ If you prefer the terminal or want to script the build:
 2.  Run the following command (replace `fenix5x` with your target device ID):
 
 ```bash
-monkeyc -o bin/RugbyRefApp.prg -f monkey.jungle -d fenix5x -y /path/to/developer_key.der
+monkeyc -o bin/RugbyRefApp.prg -f monkey.jungle -d fenix5x -y /path/to/developer_key.der -r
 ```
 
 *   `-o`: Output file path.
 *   `-f`: Project jungle file (usually `monkey.jungle`).
 *   `-d`: Target device ID (e.g., `fenix6`, `fr945`, `venu`).
 *   `-y`: Path to your developer key.
+*   `-r`: Creates a release build (strips debug symbols and optimizes). Required when distributing the app "as is".
 
 ## 3. Installing on Your Watch (Sideloading)
 
