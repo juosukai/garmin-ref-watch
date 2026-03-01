@@ -45,6 +45,8 @@ monkeyc -o bin/RugbyRefApp.prg -f monkey.jungle -d fenix5x -y /path/to/developer
 *   `-d`: Target device ID (e.g., `fenix6`, `fr945`, `venu`).
 *   `-y`: Path to your developer key.
 
+> **Note on Release Builds**: If you are building the app for distribution or sideloading as a final version, you should include the `-r` flag (e.g., `monkeyc -r -o ...`). This tells the compiler to create a "release build", which optimizes the code and strips out debug symbols, resulting in a smaller, faster app.
+
 ## 3. Installing on Your Watch (Sideloading)
 
 To install the app "as is" without going through the Connect IQ Store:
@@ -64,7 +66,7 @@ If you want to share the app with friends or teammates directly (bypassing the s
 **Important**: Garmin apps are compiled for **specific device models**. You cannot take a file built for a `fenix5x` and run it on a `venu2`.
 
 1.  **Ask the recipient for their exact watch model** (e.g., Forerunner 245, Fenix 7).
-2.  **Build the app specifically for that device ID** using the steps above.
+2.  **Build the app specifically for that device ID** using the steps above. Remember to create a release build (e.g., using the `-r` flag with `monkeyc` on the command line) to ensure the app is optimized.
 3.  **Send them the `.prg` file**.
 4.  Instruct them to follow the "Sideloading" steps above to install it.
 
