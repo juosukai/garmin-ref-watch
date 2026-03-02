@@ -37,9 +37,10 @@ If you prefer the terminal or want to script the build:
 2.  Run the following command (replace `fenix5x` with your target device ID):
 
 ```bash
-monkeyc -o bin/RugbyRefApp.prg -f monkey.jungle -d fenix5x -y /path/to/developer_key.der
+monkeyc -r -o bin/RugbyRefApp.prg -f monkey.jungle -d fenix5x -y /path/to/developer_key.der
 ```
 
+*   `-r`: Create a release build (strips debug symbols, optimizes code). Required if you want to distribute the app.
 *   `-o`: Output file path.
 *   `-f`: Project jungle file (usually `monkey.jungle`).
 *   `-d`: Target device ID (e.g., `fenix6`, `fr945`, `venu`).
@@ -47,13 +48,13 @@ monkeyc -o bin/RugbyRefApp.prg -f monkey.jungle -d fenix5x -y /path/to/developer
 
 ## 3. Installing on Your Watch (Sideloading)
 
-To install the app "as is" without going through the Connect IQ Store:
+To install the app "as is" without going through the Connect IQ Store, you must sideload the compiled `.prg` file directly onto the watch:
 
 1.  Connect your Garmin watch to your computer via USB.
-2.  It should appear as a mass storage drive (like a USB stick).
+2.  It should appear as a mass storage drive (like a USB stick) on your computer.
 3.  Open the drive associated with your watch.
-4.  Navigate to the `GARMIN` folder, then the `APPS` folder.
-5.  Copy the built `.prg` file (e.g., `RugbyRefApp.prg`) into the `GARMIN/APPS/` folder.
+4.  Navigate to the `GARMIN` folder, then open the `APPS` folder.
+5.  Copy the built `.prg` file (e.g., `RugbyRefApp.prg`) from your computer and paste it into the `GARMIN/APPS/` folder on the watch.
 6.  Safely disconnect/eject your watch from the computer.
 7.  The app should now appear in your activity/app list on the watch.
 
