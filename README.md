@@ -101,7 +101,7 @@ For detailed instructions on building, signing, sideloading, and distributing th
 3. The app will be installed on your watch
 
 **Option 3: Manual Installation**
-1. Build the app (creates a `.prg` file in the `bin` folder)
+1. Build the app for release (creates a `.prg` file in the `bin` folder)
 2. Connect watch via USB
 3. Copy the `.prg` file to `GARMIN/APPS/` folder on your watch
 4. Disconnect and find the app in your watch's app menu

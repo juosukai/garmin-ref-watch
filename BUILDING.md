@@ -37,13 +37,14 @@ If you prefer the terminal or want to script the build:
 2.  Run the following command (replace `fenix5x` with your target device ID):
 
 ```bash
-monkeyc -o bin/RugbyRefApp.prg -f monkey.jungle -d fenix5x -y /path/to/developer_key.der
+monkeyc -o bin/RugbyRefApp.prg -f monkey.jungle -d fenix5x -y /path/to/developer_key.der -r
 ```
 
 *   `-o`: Output file path.
 *   `-f`: Project jungle file (usually `monkey.jungle`).
 *   `-d`: Target device ID (e.g., `fenix6`, `fr945`, `venu`).
 *   `-y`: Path to your developer key.
+*   `-r`: Release build (strips debug symbols). Required for optimal performance and distribution.
 
 ## 3. Installing on Your Watch (Sideloading)
 
@@ -64,7 +65,7 @@ If you want to share the app with friends or teammates directly (bypassing the s
 **Important**: Garmin apps are compiled for **specific device models**. You cannot take a file built for a `fenix5x` and run it on a `venu2`.
 
 1.  **Ask the recipient for their exact watch model** (e.g., Forerunner 245, Fenix 7).
-2.  **Build the app specifically for that device ID** using the steps above.
+2.  **Build a release version of the app specifically for that device ID** using the steps above (ensure you use the `-r` flag if using the command line or export a release build from VS Code).
 3.  **Send them the `.prg` file**.
 4.  Instruct them to follow the "Sideloading" steps above to install it.
 
