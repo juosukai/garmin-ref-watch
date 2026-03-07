@@ -106,6 +106,12 @@ For detailed instructions on building, signing, sideloading, and distributing th
 3. Copy the `.prg` file to `GARMIN/APPS/` folder on your watch
 4. Disconnect and find the app in your watch's app menu
 
+**Option 4: Distributing As Is**
+1. Ask the recipient for their exact watch model.
+2. Find the corresponding device ID in `manifest.xml` and build the app specifically for that device ID.
+3. Send them the compiled `.prg` file and instruct them to manually install it following Option 3.
+4. See the "Distributing 'As Is'" section in [BUILDING.md](BUILDING.md#4-distributing-as-is) for detailed instructions.
+
 ## Settings & Customization
 
 All settings can be configured through the watch interface (MENU → Settings):
