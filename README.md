@@ -106,6 +106,13 @@ For detailed instructions on building, signing, sideloading, and distributing th
 3. Copy the `.prg` file to `GARMIN/APPS/` folder on your watch
 4. Disconnect and find the app in your watch's app menu
 
+### Distributing "As Is"
+If you want to share the app directly with others without using the Connect IQ Store:
+1. Ask the recipient for their exact Garmin watch model.
+2. Build the app specifically for that device ID (use the `-r` release flag for optimal performance). Signed `.prg` files are strictly device-specific.
+3. Send them the generated `.prg` file.
+4. Instruct them to follow the "Manual Installation" steps above to install it via USB.
+
 ## Settings & Customization
 
 All settings can be configured through the watch interface (MENU → Settings):
