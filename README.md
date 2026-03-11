@@ -106,6 +106,17 @@ For detailed instructions on building, signing, sideloading, and distributing th
 3. Copy the `.prg` file to `GARMIN/APPS/` folder on your watch
 4. Disconnect and find the app in your watch's app menu
 
+### Distributing "As Is"
+
+If you want to share the app with friends or teammates directly (bypassing the store):
+
+**Important**: Signed `.prg` files generated for sideloading are **strictly device-specific**. You cannot take a file built for a `fenix5x` and run it on a `venu2`. A separate build is required for each different target device model.
+
+1. **Ask the recipient for their exact watch model** (e.g., Forerunner 245, Fenix 7).
+2. **Build the app specifically for that device ID** (see "Build Instructions" above).
+3. **Send them the `.prg` file**.
+4. Instruct them to follow the "Manual Installation" steps above to install it.
+
 ## Settings & Customization
 
 All settings can be configured through the watch interface (MENU → Settings):
