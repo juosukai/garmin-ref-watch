@@ -106,6 +106,15 @@ For detailed instructions on building, signing, sideloading, and distributing th
 3. Copy the `.prg` file to `GARMIN/APPS/` folder on your watch
 4. Disconnect and find the app in your watch's app menu
 
+### Distributing "As Is"
+
+If you want to distribute the app directly to others bypassing the Connect IQ Store:
+
+1. **Ask the recipient for their exact watch model** (e.g., Forerunner 245, Fenix 7). `.prg` files are strictly device-specific.
+2. **Build the app specifically for that device ID**. You must use the `-r` release flag during compilation (e.g., via command line: `monkeyc -r ...`) to strip debug symbols and apply optimizations.
+3. **Send them the `.prg` file**.
+4. Instruct them to manually install the app by copying the `.prg` file to the `GARMIN/APPS/` folder on their watch via USB, as described in the Manual Installation step.
+
 ## Settings & Customization
 
 All settings can be configured through the watch interface (MENU → Settings):
