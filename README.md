@@ -75,7 +75,8 @@ A free, open-source rugby referee assistant app for Garmin watches.
 
 ## Building & Installation
 
-For detailed instructions on building, signing, sideloading, and distributing the app, please see [BUILDING.md](BUILDING.md).
+For detailed instructions on building, signing, and sideloading the app, please see [BUILDING.md](BUILDING.md).
+For instructions on how to distribute the app directly to others, please see [DISTRIBUTING.md](DISTRIBUTING.md).
 
 ### Prerequisites
 
