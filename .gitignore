@@ -15,3 +15,5 @@ internal-mir/
 external-mir/
 developer_key.der
 *.prg
+node_modules/
+package-lock.json
