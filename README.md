@@ -29,7 +29,7 @@ A free, open-source rugby referee assistant app for Garmin watches.
   
 - **Configurable Sin Bin Timer**: 2 min (7s), 5 min (youth), or 10 min (15s)
   
-- **Half-time Management**: 
+- **Half-time Management**:
   - Automatic half-time break screen
   - Configurable break duration (1, 5, 10, or 15 minutes)
   - Press SELECT to start second half
@@ -39,7 +39,7 @@ A free, open-source rugby referee assistant app for Garmin watches.
   - Half-time statistics
   - Total match time
   
-- **Smart Vibration Alerts**: 
+- **Smart Vibration Alerts**:
   - Half-time and full-time
   - Sin bin completion
   - 60s stopped reminder
@@ -75,7 +75,7 @@ A free, open-source rugby referee assistant app for Garmin watches.
 
 ## Building & Installation
 
-For detailed instructions on building, signing, sideloading, and distributing the app, please see [BUILDING.md](BUILDING.md).
+For detailed instructions on building, signing, and sideloading the app, please see [BUILDING.md](BUILDING.md). For instructions on distributing the app "as is", please see [DISTRIBUTING.md](DISTRIBUTING.md).
 
 ### Prerequisites
 
@@ -92,15 +92,18 @@ For detailed instructions on building, signing, sideloading, and distributing th
 ### Install on Watch
 
 **Option 1: Using Simulator**
+
 1. Press `Ctrl+Shift+P` and select "Monkey C: Run in Simulator"
 2. Select "fenix5x" simulator
 
 **Option 2: On Real Device**
+
 1. Connect your Fenix 5X via USB
 2. Press `Ctrl+Shift+P` and select "Monkey C: Run on Device"
 3. The app will be installed on your watch
 
 **Option 3: Manual Installation**
+
 1. Build the app (creates a `.prg` file in the `bin` folder)
 2. Connect watch via USB
 3. Copy the `.prg` file to `GARMIN/APPS/` folder on your watch
@@ -110,7 +113,8 @@ For detailed instructions on building, signing, sideloading, and distributing th
 
 All settings can be configured through the watch interface (MENU → Settings):
 
-### Quick Format Presets:
+### Quick Format Presets
+
 - **Rugby 7s**: 7 min halves, 2 min sin bin, 1 min break
 - **Rugby 10s**: 20 min halves, 10 min sin bin, 5 min break
 - **Youth/12-a-side**: 25 min halves, 5 min sin bin, 10 min break
