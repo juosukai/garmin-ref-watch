@@ -436,19 +436,16 @@ class RugbyRefView extends Ui.View {
     }
 
     function stopSinBin() {
-        if (mSinBins.size() > 0) {
+        var binsSize = mSinBins.size();
+        if (binsSize > 0) {
             // Remove the sin bin closest to expiring
             var minIdx = 0;
-            for (var i = 1; i < mSinBins.size(); i++) {
+            for (var i = 1; i < binsSize; i++) {
                 if (mSinBins[i][:time] < mSinBins[minIdx][:time]) {
                     minIdx = i;
                 }
             }
-            var newBins = [];
-            for (var i = 0; i < mSinBins.size(); i++) {
-                if (i != minIdx) { newBins.add(mSinBins[i]); }
-            }
-            mSinBins = newBins;
+            mSinBins.remove(mSinBins[minIdx]);
         }
         ensureTimerState();
         Ui.requestUpdate();
