@@ -7,9 +7,9 @@ class SettingsMenu extends Ui.Menu2 {
         Menu2.initialize({:title=>"Settings"});
         
         var vibrateOn = Storage.getValue("vibrateEnabled");
-        if (vibrateOn == null) { vibrateOn = true; }
+        if (!(vibrateOn instanceof Boolean)) { vibrateOn = true; }
         var reminderOn = Storage.getValue("reminderEnabled");
-        if (reminderOn == null) { reminderOn = true; }
+        if (!(reminderOn instanceof Boolean)) { reminderOn = true; }
         
         addItem(new Ui.MenuItem("Match Format", null, :match_format, {}));
         addItem(new Ui.MenuItem("Half Duration", null, :half_duration, {}));
@@ -64,7 +64,7 @@ class SettingsMenuDelegate extends Ui.Menu2InputDelegate {
     
     private function toggleVibration() {
         var current = Storage.getValue("vibrateEnabled");
-        if (current == null) {
+        if (!(current instanceof Boolean)) {
             current = true;
         }
         Storage.setValue("vibrateEnabled", !current);
@@ -76,7 +76,7 @@ class SettingsMenuDelegate extends Ui.Menu2InputDelegate {
     
     private function toggleReminder() {
         var current = Storage.getValue("reminderEnabled");
-        if (current == null) {
+        if (!(current instanceof Boolean)) {
             current = true;
         }
         Storage.setValue("reminderEnabled", !current);
