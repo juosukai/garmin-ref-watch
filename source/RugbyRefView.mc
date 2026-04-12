@@ -76,7 +76,7 @@ class RugbyRefView extends Ui.View {
         if (breakDur != null) { mBreakDuration = breakDur; }
         
         var vibrate = Storage.getValue("vibrateEnabled");
-        if (vibrate != null) { mVibrateEnabled = vibrate; }
+        if (vibrate instanceof Boolean) { mVibrateEnabled = vibrate; }
         
         var homeColor = Storage.getValue("homeColor");
         if (homeColor != null) { mHomeColor = homeColor; }
@@ -85,7 +85,7 @@ class RugbyRefView extends Ui.View {
         if (awayColor != null) { mAwayColor = awayColor; }
         
         var reminder = Storage.getValue("reminderEnabled");
-        if (reminder != null) { mReminderEnabled = reminder; }
+        if (reminder instanceof Boolean) { mReminderEnabled = reminder; }
     }
 
     function onShow() {
