@@ -1,4 +1,4 @@
-# Rugby Referee App for Garmin Fenix 5X
+# Rugby Referee App for Garmin
 
 A free, open-source rugby referee assistant app for Garmin watches.
 
