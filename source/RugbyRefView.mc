@@ -152,8 +152,9 @@ class RugbyRefView extends Ui.View {
         
         // Sin bin list
         var binY = height * 63 / 100;
-        if (mSinBins.size() > 0) {
-            for (var i = 0; i < mSinBins.size() && i < 4; i++) {
+        var binsSize = mSinBins.size();
+        if (binsSize > 0) {
+            for (var i = 0; i < binsSize && i < 4; i++) {
                 var bin = mSinBins[i];
                 var teamStr = bin[:team] == :home ? "HOME" : "AWAY";
                 var teamColor = bin[:team] == :home ? mHomeColor : mAwayColor;
@@ -352,10 +353,11 @@ class RugbyRefView extends Ui.View {
         }
         
         // Sin bin countdown (only ticks during playing time)
-        if (mMatchRunning && mSinBins.size() > 0) {
+        var binsSize = mSinBins.size();
+        if (mMatchRunning && binsSize > 0) {
             var newSinBins = [];
             var vibrated = false;
-            for (var i = 0; i < mSinBins.size(); i++) {
+            for (var i = 0; i < binsSize; i++) {
                 var bin = mSinBins[i];
                 var t = bin[:time] - 1;
                 if (t > 0) {
