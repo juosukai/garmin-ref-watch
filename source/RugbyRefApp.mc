@@ -7,12 +7,6 @@ class RugbyRefApp extends App.AppBase {
         AppBase.initialize();
     }
 
-    function onStart(state) {
-    }
-
-    function onStop(state) {
-    }
-
     function getInitialView() {
         var view = new RugbyRefView();
         return [ view, new RugbyRefDelegate(view) ];
