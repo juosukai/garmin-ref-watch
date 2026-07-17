@@ -11,6 +11,7 @@
         <menu-item id="half_time">Half Time</menu-item>
         <menu-item id="finish_match">Finish Match</menu-item>
         <menu-item id="reset">Reset Match</menu-item>
+        <menu-item id="dump_logs">Dump Logs</menu-item>
         <menu-item id="settings">Settings</menu-item>
         <menu-item id="exit_app">Exit App</menu-item>
     </menu>

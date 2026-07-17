@@ -178,3 +178,56 @@ function testMultipleSinBins(logger) {
 
     return true;
 }
+
+(:test)
+function testLoggingSystem(logger) {
+    var view = new RugbyRefView();
+    view.resetMatch(); // Resets and clears log
+
+    var log = view.getMatchLog();
+    if (log.size() != 1) {
+        logger.debug("Log should have exactly 1 entry (Match reset) after resetMatch");
+        return false;
+    }
+
+    // Add a score and verify logging
+    view.addScoreHome(5); // Try
+    if (log.size() != 2) {
+        logger.debug("Log should have 2 entries after adding score");
+        return false;
+    }
+
+    var lastLog = log[1];
+    if (lastLog.find("Score Added: HOME +5") == null) {
+        logger.debug("Log entry should contain score information: " + lastLog);
+        return false;
+    }
+
+    // Start a sin bin and verify logging
+    view.startSinBin(:away);
+    if (log.size() != 3) {
+        logger.debug("Log should have 3 entries after sin bin start");
+        return false;
+    }
+
+    lastLog = log[2];
+    if (lastLog.find("Sin bin started for team: AWAY") == null) {
+        logger.debug("Log entry should contain sin bin details: " + lastLog);
+        return false;
+    }
+
+    // Undo score and verify logging
+    view.undoLastScore();
+    if (log.size() != 4) {
+        logger.debug("Log should have 4 entries after undo");
+        return false;
+    }
+
+    lastLog = log[3];
+    if (lastLog.find("Score Undone: HOME -5") == null) {
+        logger.debug("Log entry should contain undo details: " + lastLog);
+        return false;
+    }
+
+    return true;
+}

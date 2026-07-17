@@ -6,6 +6,8 @@ using Toybox.Attention as Attention;
 using Toybox.Application.Storage as Storage;
 using Toybox.ActivityRecording;
 using Toybox.Activity as Activity;
+using Toybox.Time as Time;
+using Toybox.Time.Gregorian as Gregorian;
 
 class RugbyRefView extends Ui.View {
 
@@ -27,6 +29,9 @@ class RugbyRefView extends Ui.View {
     
     // Score history for undo
     private var mScoreHistory;
+    
+    // Match event log for downloading after the game
+    private var mMatchLog;
     
     // Sin bin state
     private var mSinBins;                // Array of seconds remaining
@@ -62,7 +67,31 @@ class RugbyRefView extends Ui.View {
         mTimerMethod = delegate.method(:onTimerTick);
         mScoreHistory = [];
         mSinBins = [];
+        mMatchLog = [];
         loadSettings();
+        loadMatchLog();
+        logEvent("Match App Initialized");
+    }
+
+    private function loadMatchLog() {
+        try {
+            var log = Storage.getValue("matchLog");
+            if (log instanceof Array) {
+                mMatchLog = log;
+            } else {
+                mMatchLog = [];
+            }
+        } catch (e) {
+            mMatchLog = [];
+        }
+    }
+
+    private function saveMatchLog() {
+        try {
+            Storage.setValue("matchLog", mMatchLog);
+        } catch (e) {
+            // Safe fallback
+        }
     }
     
     function loadSettings() {
@@ -118,10 +147,16 @@ class RugbyRefView extends Ui.View {
         // Top banner: kick timer or sin bin
         drawTopBanner(dc, width);
         
-        // Half indicator
+        // Half indicator and current score
+        dc.setColor(mHomeColor, Gfx.COLOR_TRANSPARENT);
+        dc.drawText(centerX - 40, height / 3 - 32, Gfx.FONT_SMALL, mScoreHome.toString(), Gfx.TEXT_JUSTIFY_RIGHT);
+
         var halfStr = "H" + mHalf;
         dc.setColor(Gfx.COLOR_LT_GRAY, Gfx.COLOR_TRANSPARENT);
         dc.drawText(centerX, height / 3 - 32, Gfx.FONT_SMALL, halfStr, Gfx.TEXT_JUSTIFY_CENTER);
+
+        dc.setColor(mAwayColor, Gfx.COLOR_TRANSPARENT);
+        dc.drawText(centerX + 40, height / 3 - 32, Gfx.FONT_SMALL, mScoreAway.toString(), Gfx.TEXT_JUSTIFY_LEFT);
         
         // Match timer (large, center)
         var matchTimeStr = formatTime(mMatchTime);
@@ -290,6 +325,7 @@ class RugbyRefView extends Ui.View {
     function toggleTimer() {
         // If in half-time break, start second half
         if (mHalfTimeBreak) {
+            logEvent("Half-time break ended");
             mHalfTimeBreak = false;
             mBreakTime = 0;
             mHalf = 2;
@@ -298,6 +334,7 @@ class RugbyRefView extends Ui.View {
             mHalfTimeAlerted = false;
             ensureTimerState();
             Ui.requestUpdate();
+            logEvent("Second half (H2) started");
             return;
         }
         
@@ -311,11 +348,15 @@ class RugbyRefView extends Ui.View {
             mMatchRunning = false;
             mStoppedTime = 0;
             mHasVibrated60s = false;
+            logEvent("Match paused");
         } else {
             // Start / resume the match
             if (!mMatchStarted) {
                 // First start: begin GPS/HR activity recording
                 startRecording();
+                logEvent("Match started (H1)");
+            } else {
+                logEvent("Match resumed");
             }
             mMatchRunning = true;
             mMatchStarted = true;
@@ -333,6 +374,7 @@ class RugbyRefView extends Ui.View {
             if (mBreakTime >= mBreakDuration && !mBreakTimeAlerted) {
                 vibrate();
                 mBreakTimeAlerted = true;
+                logEvent("Break duration elapsed (" + formatTime(mBreakDuration) + ")");
             }
         }
         
@@ -342,6 +384,7 @@ class RugbyRefView extends Ui.View {
             if (mMatchTime >= mHalfDuration && !mHalfTimeAlerted) {
                 vibrate();
                 mHalfTimeAlerted = true;
+                logEvent("Half duration elapsed (" + formatTime(mHalfDuration) + ")");
             }
         } else if (mMatchStarted && !mMatchFinished && !mHalfTimeBreak) {
             // Clock is stopped mid-match: track for 60s reminder
@@ -349,6 +392,7 @@ class RugbyRefView extends Ui.View {
             if (mStoppedTime == RugbyConstants.PAUSE_REMINDER_TIME && mReminderEnabled && !mHasVibrated60s) {
                 vibrateShort();
                 mHasVibrated60s = true;
+                logEvent("60s pause reminder vibration triggered");
             }
         }
         
@@ -362,9 +406,12 @@ class RugbyRefView extends Ui.View {
                 var t = bin[:time] - 1;
                 if (t > 0) {
                     newSinBins.add({:team => bin[:team], :time => t});
-                } else if (!vibrated) {
-                    vibrate();
-                    vibrated = true;
+                } else {
+                    logEvent("Sin bin expired for team: " + (bin[:team] == :home ? "HOME" : "AWAY"));
+                    if (!vibrated) {
+                        vibrate();
+                        vibrated = true;
+                    }
                 }
             }
             mSinBins = newSinBins;
@@ -375,6 +422,7 @@ class RugbyRefView extends Ui.View {
             mKickTimerTime--;
             if (mKickTimerTime <= 0) {
                 mKickTimerActive = false;
+                logEvent("Kick timer expired (" + (mKickTimerType == :conversion ? "Conversion" : "Penalty") + ")");
                 vibrate();
             } else if (mKickTimerTime == RugbyConstants.KICK_TIMER_WARNING) {
                 vibrateShort();
@@ -401,6 +449,15 @@ class RugbyRefView extends Ui.View {
             mScoreAway += points;
         }
 
+        var scoreType = "";
+        if (points == RugbyConstants.SCORE_TRY) { scoreType = "Try"; }
+        else if (points == RugbyConstants.SCORE_CONVERSION) { scoreType = "Conversion"; }
+        else if (points == RugbyConstants.SCORE_PENALTY) { scoreType = "Penalty"; }
+        else if (points == RugbyConstants.SCORE_DROP_GOAL) { scoreType = "Drop Goal"; }
+        else { scoreType = points.toString() + " pts"; }
+
+        logEvent("Score Added: " + (team == :home ? "HOME" : "AWAY") + " +" + points + " (" + scoreType + ") - Score: " + mScoreHome + "-" + mScoreAway);
+
         Ui.requestUpdate();
     }
     
@@ -424,6 +481,17 @@ class RugbyRefView extends Ui.View {
             mScoreAway -= lastScore["points"];
         }
         
+        var points = lastScore["points"];
+        var team = lastScore["team"];
+        var scoreType = "";
+        if (points == RugbyConstants.SCORE_TRY) { scoreType = "Try"; }
+        else if (points == RugbyConstants.SCORE_CONVERSION) { scoreType = "Conversion"; }
+        else if (points == RugbyConstants.SCORE_PENALTY) { scoreType = "Penalty"; }
+        else if (points == RugbyConstants.SCORE_DROP_GOAL) { scoreType = "Drop Goal"; }
+        else { scoreType = points.toString() + " pts"; }
+
+        logEvent("Score Undone: " + (team == :home ? "HOME" : "AWAY") + " -" + points + " (" + scoreType + ") - New Score: " + mScoreHome + "-" + mScoreAway);
+
         mScoreHistory.remove(lastScore);
         Ui.requestUpdate();
     }
@@ -432,6 +500,7 @@ class RugbyRefView extends Ui.View {
     
     function startSinBin(team) {
         mSinBins.add({:team => team, :time => mSinBinDuration});
+        logEvent("Sin bin started for team: " + (team == :home ? "HOME" : "AWAY") + " (" + formatTime(mSinBinDuration) + ")");
         ensureTimerState();
         vibrate();
         Ui.requestUpdate();
@@ -447,6 +516,8 @@ class RugbyRefView extends Ui.View {
                     minIdx = i;
                 }
             }
+            var removedBin = mSinBins[minIdx];
+            logEvent("Sin bin manually stopped for team: " + (removedBin[:team] == :home ? "HOME" : "AWAY") + " (Remaining: " + formatTime(removedBin[:time]) + ")");
             mSinBins.remove(mSinBins[minIdx]);
         }
         ensureTimerState();
@@ -457,12 +528,14 @@ class RugbyRefView extends Ui.View {
         mKickTimerActive = true;
         mKickTimerType = kickType;
         mKickTimerTime = kickType == :conversion ? RugbyConstants.KICK_TIMER_CONVERSION : RugbyConstants.KICK_TIMER_PENALTY;
+        logEvent("Kick timer started: " + (kickType == :conversion ? "Conversion" : "Penalty") + " (" + mKickTimerTime + "s)");
         ensureTimerState();
         vibrateShort();
         Ui.requestUpdate();
     }
     
     function stopKickTimer() {
+        logEvent("Kick timer manually stopped (Remaining: " + mKickTimerTime + "s)");
         mKickTimerActive = false;
         ensureTimerState();
         Ui.requestUpdate();
@@ -474,6 +547,7 @@ class RugbyRefView extends Ui.View {
         mBreakTime = 0;
         mBreakTimeAlerted = false;
         mMatchRunning = false;
+        logEvent("Half-time started. Score: " + mScoreHome + "-" + mScoreAway);
         ensureTimerState();
         vibrate();
         Ui.requestUpdate();
@@ -488,12 +562,36 @@ class RugbyRefView extends Ui.View {
         mKickTimerActive = false;
         mTimer.stop();
         mTimerRunning = false;
+        
+        logEvent("Match finished (Full-time). Final Score: " + mScoreHome + "-" + mScoreAway);
+        
+        // Log stats if available
+        try {
+            var actInfo = Activity.getActivityInfo();
+            if (actInfo != null) {
+                if (actInfo.elapsedDistance != null) {
+                    var distKm = actInfo.elapsedDistance / 1000.0;
+                    logEvent("Match Stat: Distance = " + distKm.format("%.2f") + " km");
+                }
+                if (actInfo.averageHeartRate != null) {
+                    logEvent("Match Stat: Avg HR = " + actInfo.averageHeartRate.format("%d") + " bpm");
+                }
+            }
+        } catch (e) {
+            // Safe fallback
+        }
+        
         stopRecording(true); // Save the activity
         vibrate();
         Ui.requestUpdate();
+        
+        // Dump the entire match logs in one contiguous block at full time
+        dumpLogs();
     }
     
     function resetMatch() {
+        logEvent("Match reset. Score was: " + mScoreHome + "-" + mScoreAway);
+        
         stopRecording(false); // Discard any in-progress recording
         mMatchTime = 0;
         mHalf = 1;
@@ -514,6 +612,10 @@ class RugbyRefView extends Ui.View {
         mKickTimerActive = false;
         mTimer.stop();
         mTimerRunning = false;
+        
+        mMatchLog = [];
+        saveMatchLog();
+        
         Ui.requestUpdate();
     }
     
@@ -644,6 +746,62 @@ class RugbyRefView extends Ui.View {
             }
             mSession = null;
         }
+    }
+
+    private function logEvent(event) {
+        var realTimeStr = "0000-00-00 00:00:00";
+        try {
+            var now = Time.now();
+            var info = Gregorian.info(now, Time.FORMAT_SHORT);
+            realTimeStr = info.year.format("%04d") + "-" +
+                          info.month.format("%02d") + "-" +
+                          info.day.format("%02d") + " " +
+                          info.hour.format("%02d") + ":" +
+                          info.min.format("%02d") + ":" +
+                          info.sec.format("%02d");
+        } catch (e) {
+            // Fallback if Gregorian info fails
+        }
+        
+        var gameTimeStr = formatTime(mMatchTime);
+        var halfStr = "H" + mHalf;
+        if (mHalfTimeBreak) {
+            halfStr = "HT";
+            gameTimeStr = formatTime(mBreakTime);
+        }
+        
+        var logLine = "[" + realTimeStr + "] [" + halfStr + " " + gameTimeStr + "] " + event;
+        
+        // Output to console / file on device
+        Sys.println(logLine);
+        
+        // Store in-memory and in secure persistent storage
+        if (mMatchLog == null) {
+            mMatchLog = [];
+        }
+        
+        // Cap the log array size to prevent high memory usage
+        if (mMatchLog.size() >= 100) {
+            mMatchLog.remove(mMatchLog[0]);
+        }
+        
+        mMatchLog.add(logLine);
+        saveMatchLog();
+    }
+
+    function dumpLogs() {
+        if (mMatchLog == null) { return; }
+        Sys.println("--- DUMP MATCH LOGS START ---");
+        var size = mMatchLog.size();
+        for (var i = 0; i < size; i++) {
+            Sys.println(mMatchLog[i]);
+        }
+        Sys.println("--- DUMP MATCH LOGS END ---");
+    }
+    
+    (:test)
+    function getMatchLog() {
+        return mMatchLog;
     }
 }
 

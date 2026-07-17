@@ -72,6 +72,8 @@ class MainMenuDelegate extends Ui.MenuInputDelegate {
             mView.finishMatch();
         } else if (item == :reset) {
             mView.resetMatch();
+        } else if (item == :dump_logs) {
+            mView.dumpLogs();
         } else if (item == :undo_score) {
             mView.undoLastScore();
         } else if (item == :kick_conversion) {
