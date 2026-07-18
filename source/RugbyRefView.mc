@@ -45,6 +45,7 @@ class RugbyRefView extends Ui.View {
     private var mTimer;
     private var mTimerMethod;
     private var mTimerRunning = false;
+    private var mLastTickSystemTime = null;
     
     // Activity Recording
     private var mSession;
@@ -118,6 +119,19 @@ class RugbyRefView extends Ui.View {
     }
 
     function onShow() {
+        if (mLastTickSystemTime != null) {
+            var nowSystemTime = System.getTimer();
+            var diffMs = nowSystemTime - mLastTickSystemTime;
+            if (diffMs > 0) {
+                var diffSecs = diffMs / 1000;
+                if (diffSecs > 0) {
+                    applyTimeElapse(diffSecs);
+                    mLastTickSystemTime = mLastTickSystemTime + (diffSecs * 1000);
+                }
+            }
+        } else {
+            mLastTickSystemTime = System.getTimer();
+        }
         // Restart the hardware timer if we need it (e.g. returning from a menu)
         ensureTimerState();
     }
@@ -332,6 +346,7 @@ class RugbyRefView extends Ui.View {
             mMatchTime = 0;
             mMatchRunning = false;
             mHalfTimeAlerted = false;
+            mLastTickSystemTime = System.getTimer();
             ensureTimerState();
             Ui.requestUpdate();
             logEvent("Second half (H2) started");
@@ -363,14 +378,35 @@ class RugbyRefView extends Ui.View {
             mStoppedTime = 0;
         }
         
+        mLastTickSystemTime = System.getTimer();
         ensureTimerState();
         Ui.requestUpdate();
     }
     
     function onTimerTick() {
-        // Half-time break counter
+        var nowSystemTime = System.getTimer();
+        if (mLastTickSystemTime != null) {
+            var diffMs = nowSystemTime - mLastTickSystemTime;
+            if (diffMs > 0) {
+                var diffSecs = diffMs / 1000;
+                if (diffSecs > 0) {
+                    applyTimeElapse(diffSecs);
+                    mLastTickSystemTime = mLastTickSystemTime + (diffSecs * 1000);
+                }
+            }
+        } else {
+            mLastTickSystemTime = nowSystemTime;
+        }
+        
+        ensureTimerState();
+        Ui.requestUpdate();
+    }
+
+    private function applyTimeElapse(seconds) {
+        if (seconds <= 0) { return; }
+
         if (mHalfTimeBreak) {
-            mBreakTime++;
+            mBreakTime += seconds;
             if (mBreakTime >= mBreakDuration && !mBreakTimeAlerted) {
                 vibrate();
                 mBreakTimeAlerted = true;
@@ -378,59 +414,55 @@ class RugbyRefView extends Ui.View {
             }
         }
         
-        // Match clock
         if (mMatchRunning) {
-            mMatchTime++;
+            mMatchTime += seconds;
             if (mMatchTime >= mHalfDuration && !mHalfTimeAlerted) {
                 vibrate();
                 mHalfTimeAlerted = true;
                 logEvent("Half duration elapsed (" + formatTime(mHalfDuration) + ")");
             }
+            
+            // Sin bin countdown
+            var binsSize = mSinBins.size();
+            if (binsSize > 0) {
+                var newSinBins = [];
+                var vibrated = false;
+                for (var i = 0; i < binsSize; i++) {
+                    var bin = mSinBins[i];
+                    var t = bin[:time] - seconds;
+                    if (t > 0) {
+                        newSinBins.add({:team => bin[:team], :time => t});
+                    } else {
+                        logEvent("Sin bin expired for team: " + (bin[:team] == :home ? "HOME" : "AWAY"));
+                        if (!vibrated) {
+                            vibrate();
+                            vibrated = true;
+                        }
+                    }
+                }
+                mSinBins = newSinBins;
+            }
+            
+            // Kick timer countdown
+            if (mKickTimerActive) {
+                mKickTimerTime -= seconds;
+                if (mKickTimerTime <= 0) {
+                    mKickTimerActive = false;
+                    logEvent("Kick timer expired (" + (mKickTimerType == :conversion ? "Conversion" : "Penalty") + ")");
+                    vibrate();
+                } else if (mKickTimerTime <= RugbyConstants.KICK_TIMER_WARNING && (mKickTimerTime + seconds) > RugbyConstants.KICK_TIMER_WARNING) {
+                    vibrateShort();
+                }
+            }
         } else if (mMatchStarted && !mMatchFinished && !mHalfTimeBreak) {
             // Clock is stopped mid-match: track for 60s reminder
-            mStoppedTime++;
-            if (mStoppedTime == RugbyConstants.PAUSE_REMINDER_TIME && mReminderEnabled && !mHasVibrated60s) {
+            mStoppedTime += seconds;
+            if (mStoppedTime >= RugbyConstants.PAUSE_REMINDER_TIME && mReminderEnabled && !mHasVibrated60s) {
                 vibrateShort();
                 mHasVibrated60s = true;
                 logEvent("60s pause reminder vibration triggered");
             }
         }
-        
-        // Sin bin countdown (only ticks during playing time)
-        var binsSize = mSinBins.size();
-        if (mMatchRunning && binsSize > 0) {
-            var newSinBins = [];
-            var vibrated = false;
-            for (var i = 0; i < binsSize; i++) {
-                var bin = mSinBins[i];
-                var t = bin[:time] - 1;
-                if (t > 0) {
-                    newSinBins.add({:team => bin[:team], :time => t});
-                } else {
-                    logEvent("Sin bin expired for team: " + (bin[:team] == :home ? "HOME" : "AWAY"));
-                    if (!vibrated) {
-                        vibrate();
-                        vibrated = true;
-                    }
-                }
-            }
-            mSinBins = newSinBins;
-        }
-        
-        // Kick timer countdown (only runs when match clock is running)
-        if (mKickTimerActive && mMatchRunning) {
-            mKickTimerTime--;
-            if (mKickTimerTime <= 0) {
-                mKickTimerActive = false;
-                logEvent("Kick timer expired (" + (mKickTimerType == :conversion ? "Conversion" : "Penalty") + ")");
-                vibrate();
-            } else if (mKickTimerTime == RugbyConstants.KICK_TIMER_WARNING) {
-                vibrateShort();
-            }
-        }
-        
-        ensureTimerState();
-        Ui.requestUpdate();
     }
     
     // --- Score management ---
@@ -548,6 +580,7 @@ class RugbyRefView extends Ui.View {
         mBreakTimeAlerted = false;
         mMatchRunning = false;
         logEvent("Half-time started. Score: " + mScoreHome + "-" + mScoreAway);
+        mLastTickSystemTime = System.getTimer();
         ensureTimerState();
         vibrate();
         Ui.requestUpdate();
@@ -612,6 +645,7 @@ class RugbyRefView extends Ui.View {
         mKickTimerActive = false;
         mTimer.stop();
         mTimerRunning = false;
+        mLastTickSystemTime = null;
         
         mMatchLog = [];
         saveMatchLog();
