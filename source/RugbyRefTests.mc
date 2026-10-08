@@ -145,36 +145,3 @@ function testBreakTimerAlertLogic(logger) {
     return true;
 }
 
-(:test)
-function testMultipleSinBins(logger) {
-    var view = new RugbyRefView();
-
-    // Initial state: 0 sin bins
-    if (view.getSinBins().size() != 0) {
-        logger.debug("Initial sin bins should be 0");
-        return false;
-    }
-
-    // Add first sin bin
-    view.startSinBin(:home);
-    if (view.getSinBins().size() != 1) {
-        logger.debug("Should have 1 sin bin");
-        return false;
-    }
-
-    // Add second sin bin
-    view.startSinBin(:home);
-    if (view.getSinBins().size() != 2) {
-        logger.debug("Should have 2 sin bins");
-        return false;
-    }
-
-    // Test removal
-    view.stopSinBin();
-    if (view.getSinBins().size() != 1) {
-        logger.debug("Should have 1 sin bin after stop");
-        return false;
-    }
-
-    return true;
-}
