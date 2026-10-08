@@ -615,10 +615,6 @@ class RugbyRefView extends Ui.View {
         mBreakDuration = duration;
     }
 
-    function getSinBins() {
-        return mSinBins;
-    }
-
     // --- Activity recording ---
 
     private function startRecording() {
