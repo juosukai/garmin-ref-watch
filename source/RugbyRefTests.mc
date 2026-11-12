@@ -231,3 +231,50 @@ function testLoggingSystem(logger) {
 
     return true;
 }
+
+(:test)
+function testStatePersistence(logger) {
+    var view = new RugbyRefView();
+    view.resetMatch(); // Clears any saved state
+
+    // Simulate match in progress
+    view.toggleTimer(); // Starts match (mMatchStarted = true, mMatchRunning = true)
+    view.addScoreHome(5); // Add Try
+    view.addScoreAway(3); // Add Penalty
+    view.startSinBin(:home); // Start Sin Bin for Home team
+
+    // Now, create a second view instance to simulate app closing and reopening
+    var recoveredView = new RugbyRefView();
+    // RugbyRefView.initialize() automatically calls loadMatchState()
+
+    // Assert that the state has been recovered correctly
+    if (!recoveredView.isMatchStarted()) {
+        logger.debug("Recovered view should show match started");
+        return false;
+    }
+
+    if (recoveredView.getScoreHome() != 5) {
+        logger.debug("Recovered home score should be 5, got " + recoveredView.getScoreHome());
+        return false;
+    }
+
+    if (recoveredView.getScoreAway() != 3) {
+        logger.debug("Recovered away score should be 3, got " + recoveredView.getScoreAway());
+        return false;
+    }
+
+    var sinBins = recoveredView.getSinBins();
+    if (sinBins.size() != 1) {
+        logger.debug("Recovered sin bins should have 1 entry, got " + sinBins.size());
+        return false;
+    }
+
+    if (sinBins[0][:team] != :home) {
+        logger.debug("Recovered sin bin team should be :home");
+        return false;
+    }
+
+    // Clean up
+    recoveredView.resetMatch();
+    return true;
+}

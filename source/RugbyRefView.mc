@@ -71,6 +71,7 @@ class RugbyRefView extends Ui.View {
         mMatchLog = [];
         loadSettings();
         loadMatchLog();
+        loadMatchState();
         logEvent("Match App Initialized");
     }
 
@@ -348,6 +349,7 @@ class RugbyRefView extends Ui.View {
             mHalfTimeAlerted = false;
             mLastTickSystemTime = System.getTimer();
             ensureTimerState();
+            saveMatchState();
             Ui.requestUpdate();
             logEvent("Second half (H2) started");
             return;
@@ -380,6 +382,7 @@ class RugbyRefView extends Ui.View {
         
         mLastTickSystemTime = System.getTimer();
         ensureTimerState();
+        saveMatchState();
         Ui.requestUpdate();
     }
     
@@ -396,6 +399,11 @@ class RugbyRefView extends Ui.View {
             }
         } else {
             mLastTickSystemTime = nowSystemTime;
+        }
+        
+        // Save periodically (every 15 seconds) to ensure match continuity in case of crash/exit
+        if (mMatchStarted && !mMatchFinished && (mMatchTime % 15 == 0 || mBreakTime % 15 == 0)) {
+            saveMatchState();
         }
         
         ensureTimerState();
@@ -490,6 +498,7 @@ class RugbyRefView extends Ui.View {
 
         logEvent("Score Added: " + (team == :home ? "HOME" : "AWAY") + " +" + points + " (" + scoreType + ") - Score: " + mScoreHome + "-" + mScoreAway);
 
+        saveMatchState();
         Ui.requestUpdate();
     }
     
@@ -525,6 +534,7 @@ class RugbyRefView extends Ui.View {
         logEvent("Score Undone: " + (team == :home ? "HOME" : "AWAY") + " -" + points + " (" + scoreType + ") - New Score: " + mScoreHome + "-" + mScoreAway);
 
         mScoreHistory.remove(lastScore);
+        saveMatchState();
         Ui.requestUpdate();
     }
     
@@ -535,6 +545,7 @@ class RugbyRefView extends Ui.View {
         logEvent("Sin bin started for team: " + (team == :home ? "HOME" : "AWAY") + " (" + formatTime(mSinBinDuration) + ")");
         ensureTimerState();
         vibrate();
+        saveMatchState();
         Ui.requestUpdate();
     }
 
@@ -553,6 +564,7 @@ class RugbyRefView extends Ui.View {
             mSinBins.remove(mSinBins[minIdx]);
         }
         ensureTimerState();
+        saveMatchState();
         Ui.requestUpdate();
     }
     
@@ -563,6 +575,7 @@ class RugbyRefView extends Ui.View {
         logEvent("Kick timer started: " + (kickType == :conversion ? "Conversion" : "Penalty") + " (" + mKickTimerTime + "s)");
         ensureTimerState();
         vibrateShort();
+        saveMatchState();
         Ui.requestUpdate();
     }
     
@@ -570,6 +583,7 @@ class RugbyRefView extends Ui.View {
         logEvent("Kick timer manually stopped (Remaining: " + mKickTimerTime + "s)");
         mKickTimerActive = false;
         ensureTimerState();
+        saveMatchState();
         Ui.requestUpdate();
     }
     
@@ -583,6 +597,7 @@ class RugbyRefView extends Ui.View {
         mLastTickSystemTime = System.getTimer();
         ensureTimerState();
         vibrate();
+        saveMatchState();
         Ui.requestUpdate();
     }
     
@@ -616,6 +631,7 @@ class RugbyRefView extends Ui.View {
         
         stopRecording(true); // Save the activity
         vibrate();
+        saveMatchState();
         Ui.requestUpdate();
         
         // Dump the entire match logs in one contiguous block at full time
@@ -649,6 +665,12 @@ class RugbyRefView extends Ui.View {
         
         mMatchLog = [];
         saveMatchLog();
+        
+        try {
+            Storage.deleteValue("matchState");
+        } catch (e) {
+            // Safe fallback
+        }
         
         Ui.requestUpdate();
     }
@@ -689,6 +711,11 @@ class RugbyRefView extends Ui.View {
     
     function isMatchActive() {
         return mMatchStarted && !mMatchFinished;
+    }
+
+    (:test)
+    function isMatchStarted() {
+        return mMatchStarted;
     }
 
     (:test)
@@ -833,6 +860,78 @@ class RugbyRefView extends Ui.View {
         Sys.println("--- DUMP MATCH LOGS END ---");
     }
     
+    private function saveMatchState() {
+        try {
+            var state = {
+                "matchTime" => mMatchTime,
+                "matchRunning" => mMatchRunning,
+                "halfTimeAlerted" => mHalfTimeAlerted,
+                "breakTimeAlerted" => mBreakTimeAlerted,
+                "half" => mHalf,
+                "scoreHome" => mScoreHome,
+                "scoreAway" => mScoreAway,
+                "halfTimeBreak" => mHalfTimeBreak,
+                "breakTime" => mBreakTime,
+                "matchFinished" => mMatchFinished,
+                "matchStarted" => mMatchStarted,
+                "stoppedTime" => mStoppedTime,
+                "hasVibrated60s" => mHasVibrated60s,
+                "h1FinalTime" => mH1FinalTime,
+                "scoreHistory" => mScoreHistory,
+                "sinBins" => mSinBins,
+                "kickTimerActive" => mKickTimerActive,
+                "kickTimerTime" => mKickTimerTime,
+                "kickTimerType" => mKickTimerType,
+                "saveRealTime" => Time.now().value()
+            };
+            Storage.setValue("matchState", state);
+        } catch (e) {
+            // Safe fallback
+        }
+    }
+
+    private function loadMatchState() {
+        try {
+            var state = Storage.getValue("matchState");
+            if (state instanceof Dictionary) {
+                mMatchTime = state["matchTime"];
+                mMatchRunning = state["matchRunning"];
+                mHalfTimeAlerted = state["halfTimeAlerted"];
+                mBreakTimeAlerted = state["breakTimeAlerted"];
+                mHalf = state["half"];
+                mScoreHome = state["scoreHome"];
+                mScoreAway = state["scoreAway"];
+                mHalfTimeBreak = state["halfTimeBreak"];
+                mBreakTime = state["breakTime"];
+                mMatchFinished = state["matchFinished"];
+                mMatchStarted = state["matchStarted"];
+                mStoppedTime = state["stoppedTime"];
+                mHasVibrated60s = state["hasVibrated60s"];
+                mH1FinalTime = state["h1FinalTime"];
+                mScoreHistory = state["scoreHistory"];
+                mSinBins = state["sinBins"];
+                mKickTimerActive = state["kickTimerActive"];
+                mKickTimerTime = state["kickTimerTime"];
+                mKickTimerType = state["kickTimerType"];
+                
+                // If match was running/break active, catch up the clock with the real-world time passed since save
+                if (mMatchRunning || mHalfTimeBreak) {
+                    var saveRealTime = state["saveRealTime"];
+                    if (saveRealTime != null) {
+                        var nowRealTime = Time.now().value();
+                        var elapsedSecs = nowRealTime - saveRealTime;
+                        if (elapsedSecs > 0 && elapsedSecs < 10800) { // Max 3 hours catch up
+                            applyTimeElapse(elapsedSecs);
+                        }
+                    }
+                }
+                mLastTickSystemTime = System.getTimer();
+            }
+        } catch (e) {
+            // Safe fallback: defaults already set
+        }
+    }
+
     (:test)
     function getMatchLog() {
         return mMatchLog;
